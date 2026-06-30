@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: harness-demo
+  namespace: harness-demo
+  labels:
+    app: harness-demo
+spec:
+  type: NodePort
+  selector:
+    app: harness-demo
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      nodePort: 30080
