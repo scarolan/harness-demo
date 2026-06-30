@@ -50,6 +50,7 @@ async def app_info():
         "app_name": settings.APP_NAME,
         "version": settings.VERSION,
         "environment": settings.ENVIRONMENT,
+        "deploy_strategy": settings.DEPLOY_STRATEGY,
         "commit_sha": settings.COMMIT_SHA,
         "build_time": settings.BUILD_TIME,
         "hostname": platform.node(),
