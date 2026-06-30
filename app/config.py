@@ -3,6 +3,7 @@ import os
 
 class Settings:
     APP_NAME: str = "Harness Demo App"
+    DEPLOY_STRATEGY: str = "canary"
     VERSION: str = os.getenv("APP_VERSION", "1.0.0")
     ENVIRONMENT: str = os.getenv("APP_ENVIRONMENT", "local")
     COMMIT_SHA: str = os.getenv("COMMIT_SHA", "unknown")
