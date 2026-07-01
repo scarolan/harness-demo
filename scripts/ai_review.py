@@ -74,8 +74,23 @@ print()
 print(f"[Tokens: {tokens} | Time: {duration}s | Model: {MODEL}]")
 print("=" * 60)
 
-critical_lines = [l.strip() for l in review.split("\n") if "**CRITICAL" in l or "* CRITICAL" in l]
-warning_lines = [l.strip() for l in review.split("\n") if "**WARNING" in l or "* WARNING" in l]
+import re
+
+def extract_findings(text, severity):
+    findings = []
+    for line in text.split("\n"):
+        line = line.strip()
+        if not line.startswith(("*", "-")):
+            continue
+        pattern = rf'\*\*{severity}[:\s]'
+        if re.search(pattern, line, re.IGNORECASE):
+            clean = re.sub(r'\*\*?', '', line).strip().lstrip('*-: ').strip()
+            if len(clean) > 10:
+                findings.append(clean)
+    return findings
+
+critical_lines = extract_findings(review, "CRITICAL")
+warning_lines = extract_findings(review, "WARNING")
 has_request_changes = "REQUEST CHANGES" in review.upper()
 
 security_criticals = [
@@ -88,12 +103,8 @@ verdict = "BLOCKED" if should_block else (
     "PASSED_WITH_WARNINGS" if has_request_changes else "APPROVED"
 )
 
-crit = '; '.join(
-    l.replace("*", "").replace("`", "").strip() for l in critical_lines
-) if critical_lines else "None"
-warn = '; '.join(
-    l.replace("*", "").replace("`", "").strip() for l in warning_lines
-) if warning_lines else "None"
+crit = '; '.join(critical_lines) if critical_lines else "None"
+warn = '; '.join(warning_lines) if warning_lines else "None"
 
 if should_block:
     print(f"BLOCKED: {len(security_criticals)} security-critical issue(s) found — fix before deploying")
