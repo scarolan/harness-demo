@@ -24,7 +24,15 @@ prompt = (
     "2. Code quality issues\n"
     "3. Performance concerns\n"
     "4. Best practice violations\n\n"
-    "Provide a concise review with severity levels (CRITICAL/WARNING/INFO).\n"
+    "Severity guidelines:\n"
+    "- CRITICAL: Any injection (SQL, command, SSRF), hardcoded secrets, "
+    "authentication/authorization bypass, wildcard CORS with credentials, "
+    "unvalidated redirects, path traversal, sensitive data in logs or URLs, "
+    "race conditions with shared mutable state, ReDoS patterns.\n"
+    "- WARNING: Information disclosure, missing input validation, "
+    "inefficient resource management, missing error handling.\n"
+    "- INFO: Style issues, minor best practice deviations.\n\n"
+    "Provide a concise review with these severity levels.\n"
     "End with a one-line VERDICT: APPROVE or REQUEST CHANGES.\n\n"
     + code
 )

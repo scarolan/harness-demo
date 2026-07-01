@@ -7,12 +7,22 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
+from fastapi.middleware.cors import CORSMiddleware
+
 from app.config import settings
 
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.VERSION,
     docs_url="/docs",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent
