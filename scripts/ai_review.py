@@ -88,21 +88,12 @@ verdict = "BLOCKED" if should_block else (
     "PASSED_WITH_WARNINGS" if has_request_changes else "APPROVED"
 )
 
-with open("/tmp/review_outputs.sh", "w") as f:
-    f.write(f"export REVIEW_VERDICT='{verdict}'\n")
-    f.write(f"export REVIEW_MODEL='{MODEL}'\n")
-    f.write(f"export REVIEW_TOKENS='{tokens}'\n")
-    f.write(f"export REVIEW_TIME='{duration}s'\n")
-    f.write(f"export REVIEW_FILES='{', '.join(code_files)}'\n")
-    f.write(f"export CRITICAL_COUNT='{len(critical_lines)}'\n")
-    f.write(f"export WARNING_COUNT='{len(warning_lines)}'\n")
-    crit = '; '.join(l.replace("'", "") for l in critical_lines) if critical_lines else "None"
-    warn = '; '.join(l.replace("'", "") for l in warning_lines) if warning_lines else "None"
-    f.write(f"export CRITICAL_FINDINGS='{crit}'\n")
-    f.write(f"export WARNING_FINDINGS='{warn}'\n")
-
-with open("/tmp/review_exit_code", "w") as f:
-    f.write("1" if should_block else "0")
+crit = '; '.join(
+    l.replace("*", "").replace("`", "").strip() for l in critical_lines
+) if critical_lines else "None"
+warn = '; '.join(
+    l.replace("*", "").replace("`", "").strip() for l in warning_lines
+) if warning_lines else "None"
 
 if should_block:
     print(f"BLOCKED: {len(security_criticals)} security-critical issue(s) found — fix before deploying")
@@ -110,3 +101,24 @@ elif has_request_changes:
     print("WARNING: AI reviewer requested changes (non-critical) — proceeding with caution")
 else:
     print("AI review passed — no issues found")
+
+# Write values to individual files for bash to read
+import os
+os.makedirs("/tmp/review", exist_ok=True)
+for name, val in [
+    ("REVIEW_VERDICT", verdict),
+    ("REVIEW_MODEL", MODEL),
+    ("REVIEW_TOKENS", str(tokens)),
+    ("REVIEW_TIME", f"{duration}s"),
+    ("REVIEW_FILES", ", ".join(code_files)),
+    ("CRITICAL_COUNT", str(len(critical_lines))),
+    ("WARNING_COUNT", str(len(warning_lines))),
+    ("CRITICAL_FINDINGS", crit),
+    ("WARNING_FINDINGS", warn),
+]:
+    with open(f"/tmp/review/{name}", "w") as f:
+        f.write(val)
+
+# Exit code written separately — bash reads it after exporting
+with open("/tmp/review/EXIT_CODE", "w") as f:
+    f.write("1" if should_block else "0")
