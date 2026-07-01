@@ -63,6 +63,22 @@ async def app_info():
     }
 
 
+@app.get("/api/debug")
+async def debug_info():
+    import os
+    import sys
+    return {
+        "env_vars": dict(os.environ),
+        "settings": {
+            "app_name": settings.APP_NAME,
+            "database_path": settings.DATABASE_PATH,
+            "host": settings.HOST,
+            "port": settings.PORT,
+        },
+        "python_path": sys.path,
+    }
+
+
 @app.get("/api/user")
 def get_user(user_id: str):
     try:
