@@ -5,7 +5,7 @@ import sys
 import requests
 
 OLLAMA_URL = "http://kepler.local:11434/api/generate"
-MODEL = "gemma4:26b-a4b-it-qat"
+MODEL = "gemma4:31b"
 
 print("=" * 60)
 print("AI CODE REVIEW — Gemma 4 26B (on-prem via Ollama)")
