@@ -7,6 +7,13 @@ import requests
 OLLAMA_URL = "http://kepler.local:11434/api/generate"
 MODEL = "gemma4:26b-a4b-it-qat"
 
+SECURITY_KEYWORDS = [
+    "injection", "sqli", "xss", "csrf", "ssrf", "redirect", "traversal",
+    "credential", "secret", "password", "hardcoded", "authentication",
+    "authorization", "cors", "exposure", "disclosure", "sensitive",
+    "a01:", "a02:", "a03:", "a04:", "a05:", "a06:", "a07:", "a08:", "a09:", "a10:",
+]
+
 print("=" * 60)
 print("AI CODE REVIEW — Gemma 4 26B (on-prem via Ollama)")
 print("=" * 60)
@@ -24,7 +31,15 @@ prompt = (
     "2. Code quality issues\n"
     "3. Performance concerns\n"
     "4. Best practice violations\n\n"
-    "Provide a concise review with severity levels (CRITICAL/WARNING/INFO).\n"
+    "Severity guidelines:\n"
+    "- CRITICAL: Any injection (SQL, command, SSRF), hardcoded secrets, "
+    "authentication/authorization bypass, wildcard CORS with credentials, "
+    "unvalidated redirects, path traversal, sensitive data in logs or URLs, "
+    "race conditions with shared mutable state, ReDoS patterns.\n"
+    "- WARNING: Information disclosure, missing input validation, "
+    "inefficient resource management, missing error handling.\n"
+    "- INFO: Style issues, minor best practice deviations.\n\n"
+    "Provide a concise review with these severity levels.\n"
     "End with a one-line VERDICT: APPROVE or REQUEST CHANGES.\n\n"
     + code
 )
@@ -59,15 +74,19 @@ print()
 print(f"[Tokens: {tokens} | Time: {duration}s | Model: {MODEL}]")
 print("=" * 60)
 
-has_critical = "**CRITICAL" in review or "* CRITICAL" in review
-has_request_changes = "REQUEST CHANGES" in review.upper()
-
-# Write output variables to a file for the shell wrapper to export
-verdict = "BLOCKED" if (has_critical and has_request_changes) else (
-    "PASSED_WITH_WARNINGS" if has_request_changes else "APPROVED"
-)
 critical_lines = [l.strip() for l in review.split("\n") if "**CRITICAL" in l or "* CRITICAL" in l]
 warning_lines = [l.strip() for l in review.split("\n") if "**WARNING" in l or "* WARNING" in l]
+has_request_changes = "REQUEST CHANGES" in review.upper()
+
+security_criticals = [
+    l for l in critical_lines
+    if any(kw in l.lower() for kw in SECURITY_KEYWORDS)
+]
+
+should_block = len(security_criticals) > 0 and has_request_changes
+verdict = "BLOCKED" if should_block else (
+    "PASSED_WITH_WARNINGS" if has_request_changes else "APPROVED"
+)
 
 with open("/tmp/review_outputs.sh", "w") as f:
     f.write(f"export REVIEW_VERDICT='{verdict}'\n")
@@ -82,12 +101,12 @@ with open("/tmp/review_outputs.sh", "w") as f:
     f.write(f"export CRITICAL_FINDINGS='{crit}'\n")
     f.write(f"export WARNING_FINDINGS='{warn}'\n")
 
-if has_critical and has_request_changes:
-    print("BLOCKED: Critical issues found — fix before deploying")
-    with open("/tmp/review_exit_code", "w") as f:
-        f.write("1")
+with open("/tmp/review_exit_code", "w") as f:
+    f.write("1" if should_block else "0")
+
+if should_block:
+    print(f"BLOCKED: {len(security_criticals)} security-critical issue(s) found — fix before deploying")
+elif has_request_changes:
+    print("WARNING: AI reviewer requested changes (non-critical) — proceeding with caution")
 else:
-    if has_request_changes:
-        print("WARNING: AI reviewer requested changes (non-critical) — proceeding with caution")
-    else:
-        print("AI review passed — no issues found")
+    print("AI review passed — no issues found")
