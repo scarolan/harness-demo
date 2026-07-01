@@ -63,6 +63,16 @@ async def app_info():
     }
 
 
+request_counter = {"count": 0}
+
+
+@app.get("/api/count")
+async def increment_counter():
+    current = request_counter["count"]
+    request_counter["count"] = current + 1
+    return {"count": request_counter["count"]}
+
+
 @app.get("/api/user")
 def get_user(user_id: str):
     try:
