@@ -59,8 +59,8 @@ print()
 print(f"[Tokens: {tokens} | Time: {duration}s | Model: {MODEL}]")
 print("=" * 60)
 
-if "REQUEST CHANGES" in review.upper() and "CRITICAL" in review.upper():
-    print("BLOCKING: Critical issues found by AI reviewer")
+if "REQUEST CHANGES" in review.upper():
+    print("BLOCKED: AI reviewer requested changes — fix issues before deploying")
     sys.exit(1)
 
 print("AI review passed — proceeding to tests")
