@@ -5,7 +5,7 @@ import sys
 
 import requests
 
-OLLAMA_URL = "http://kepler.local:11434/api/generate"
+OLLAMA_URL = "http://192.168.1.146:11434/api/generate"
 MODEL = "gemma4:26b-a4b-it-qat"
 
 SECURITY_KEYWORDS = [
