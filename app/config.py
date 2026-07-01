@@ -9,6 +9,8 @@ class Settings:
     COMMIT_SHA: str = os.getenv("COMMIT_SHA", "unknown")
     BUILD_TIME: str = os.getenv("BUILD_TIME", "unknown")
     DATABASE_PATH: str = os.getenv("DATABASE_PATH", "users.db")
+    ADMIN_PASSWORD: str = "SuperSecret123!"
+    JWT_SECRET: str = "my-jwt-signing-key-do-not-share"
     HOST: str = os.getenv("HOST", "0.0.0.0")
     PORT: int = int(os.getenv("PORT", "8080"))
 
