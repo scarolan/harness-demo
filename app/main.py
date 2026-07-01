@@ -63,6 +63,15 @@ async def app_info():
     }
 
 
+@app.get("/api/validate")
+def validate_email(email: str):
+    import re
+    pattern = r"^([a-zA-Z0-9]+)*@([a-zA-Z0-9]+)*\.com$"
+    if re.match(pattern, email):
+        return {"valid": True}
+    return {"valid": False}
+
+
 @app.get("/api/user")
 def get_user(user_id: str):
     try:
