@@ -62,35 +62,30 @@ print("=" * 60)
 has_critical = "**CRITICAL" in review or "* CRITICAL" in review
 has_request_changes = "REQUEST CHANGES" in review.upper()
 
-# Export output variables for the Harness Output tab
-# Harness CI captures environment variables listed in outputVariables
-import os
+# Write output variables to a file for the shell wrapper to export
 verdict = "BLOCKED" if (has_critical and has_request_changes) else (
     "PASSED_WITH_WARNINGS" if has_request_changes else "APPROVED"
 )
 critical_lines = [l.strip() for l in review.split("\n") if "**CRITICAL" in l or "* CRITICAL" in l]
 warning_lines = [l.strip() for l in review.split("\n") if "**WARNING" in l or "* WARNING" in l]
 
-env_path = os.getenv("DRONE_OUTPUT")
-if env_path:
-    with open(env_path, "a") as f:
-        f.write(f"REVIEW_VERDICT={verdict}\n")
-        f.write(f"REVIEW_MODEL={MODEL}\n")
-        f.write(f"REVIEW_TOKENS={tokens}\n")
-        f.write(f"REVIEW_TIME={duration}s\n")
-        f.write(f"REVIEW_FILES={', '.join(code_files)}\n")
-        f.write(f"CRITICAL_COUNT={len(critical_lines)}\n")
-        f.write(f"WARNING_COUNT={len(warning_lines)}\n")
-        if critical_lines:
-            f.write(f"CRITICAL_FINDINGS={' | '.join(critical_lines)}\n")
-        if warning_lines:
-            f.write(f"WARNING_FINDINGS={' | '.join(warning_lines)}\n")
+with open("/tmp/review_outputs.env", "w") as f:
+    f.write(f"REVIEW_VERDICT={verdict}\n")
+    f.write(f"REVIEW_MODEL={MODEL}\n")
+    f.write(f"REVIEW_TOKENS={tokens}\n")
+    f.write(f"REVIEW_TIME={duration}s\n")
+    f.write(f"REVIEW_FILES={', '.join(code_files)}\n")
+    f.write(f"CRITICAL_COUNT={len(critical_lines)}\n")
+    f.write(f"WARNING_COUNT={len(warning_lines)}\n")
+    f.write(f"CRITICAL_FINDINGS={' | '.join(critical_lines) if critical_lines else 'None'}\n")
+    f.write(f"WARNING_FINDINGS={' | '.join(warning_lines) if warning_lines else 'None'}\n")
 
 if has_critical and has_request_changes:
     print("BLOCKED: Critical issues found — fix before deploying")
-    sys.exit(1)
-
-if has_request_changes:
-    print("WARNING: AI reviewer requested changes (non-critical) — proceeding with caution")
+    with open("/tmp/review_exit_code", "w") as f:
+        f.write("1")
 else:
-    print("AI review passed — no issues found")
+    if has_request_changes:
+        print("WARNING: AI reviewer requested changes (non-critical) — proceeding with caution")
+    else:
+        print("AI review passed — no issues found")
