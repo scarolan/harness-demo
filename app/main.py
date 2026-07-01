@@ -63,6 +63,14 @@ async def app_info():
     }
 
 
+@app.get("/api/version")
+async def get_version():
+    return {
+        "version": settings.VERSION,
+        "api_version": "v1",
+    }
+
+
 @app.get("/api/user")
 def get_user(user_id: str):
     try:
