@@ -69,16 +69,18 @@ verdict = "BLOCKED" if (has_critical and has_request_changes) else (
 critical_lines = [l.strip() for l in review.split("\n") if "**CRITICAL" in l or "* CRITICAL" in l]
 warning_lines = [l.strip() for l in review.split("\n") if "**WARNING" in l or "* WARNING" in l]
 
-with open("/tmp/review_outputs.env", "w") as f:
-    f.write(f"REVIEW_VERDICT={verdict}\n")
-    f.write(f"REVIEW_MODEL={MODEL}\n")
-    f.write(f"REVIEW_TOKENS={tokens}\n")
-    f.write(f"REVIEW_TIME={duration}s\n")
-    f.write(f"REVIEW_FILES={', '.join(code_files)}\n")
-    f.write(f"CRITICAL_COUNT={len(critical_lines)}\n")
-    f.write(f"WARNING_COUNT={len(warning_lines)}\n")
-    f.write(f"CRITICAL_FINDINGS={' | '.join(critical_lines) if critical_lines else 'None'}\n")
-    f.write(f"WARNING_FINDINGS={' | '.join(warning_lines) if warning_lines else 'None'}\n")
+with open("/tmp/review_outputs.sh", "w") as f:
+    f.write(f"export REVIEW_VERDICT='{verdict}'\n")
+    f.write(f"export REVIEW_MODEL='{MODEL}'\n")
+    f.write(f"export REVIEW_TOKENS='{tokens}'\n")
+    f.write(f"export REVIEW_TIME='{duration}s'\n")
+    f.write(f"export REVIEW_FILES='{', '.join(code_files)}'\n")
+    f.write(f"export CRITICAL_COUNT='{len(critical_lines)}'\n")
+    f.write(f"export WARNING_COUNT='{len(warning_lines)}'\n")
+    crit = '; '.join(l.replace("'", "") for l in critical_lines) if critical_lines else "None"
+    warn = '; '.join(l.replace("'", "") for l in warning_lines) if warning_lines else "None"
+    f.write(f"export CRITICAL_FINDINGS='{crit}'\n")
+    f.write(f"export WARNING_FINDINGS='{warn}'\n")
 
 if has_critical and has_request_changes:
     print("BLOCKED: Critical issues found — fix before deploying")
