@@ -100,6 +100,23 @@ Developer pushes code
 
 The 31B model was 2x slower but produced identical severity classifications. For a CI pipeline gate where speed matters, the 26B QAT model offers the best balance of quality and latency. The 31B model may be preferable for deeper architectural reviews where response time is less critical.
 
+## Prompt Engineering: Open vs Prescriptive
+
+We tested whether adding explicit severity rules to the prompt changes the model's classification.
+
+**Open prompt** (original): "Provide a concise review with severity levels (CRITICAL/WARNING/INFO)."
+
+**Prescriptive prompt**: Adds explicit rules like "CRITICAL: wildcard CORS with credentials, race conditions with shared mutable state..."
+
+| Experiment | Open Prompt | Prescriptive Prompt | Changed? |
+|---|---|---|---|
+| 7: CORS | WARNING | **CRITICAL** | Yes — followed the guideline |
+| 10: Race condition | WARNING | WARNING | No — still classified as architecture concern |
+
+**Analysis**: The prescriptive prompt successfully steered CORS from WARNING to CRITICAL — Gemma recognized `allow_origins=["*"]` + `allow_credentials=True` matched the explicit rule. However, the race condition remained WARNING even with explicit guidance. The model frames the read-then-write pattern as "thread-unsafe global state" (an architecture issue) rather than a "race condition" (a concurrency bug), so the rule doesn't trigger despite being semantically relevant.
+
+**Takeaway**: Prescriptive prompts give teams control over severity policy, but the model's internal categorization still matters. For maximum coverage, both prompt engineering and complementary static analysis tools (e.g., Bandit, Semgrep) should be used together.
+
 ## Key Observations
 
 1. **Zero false negatives on CRITICAL issues**: Every deliberately planted security vulnerability was caught and blocked.
@@ -112,9 +129,9 @@ The 31B model was 2x slower but produced identical severity classifications. For
 
 5. **Beyond static analysis**: The ReDoS detection (exp 8) demonstrates capability beyond traditional static analyzers like Bandit or Semgrep, which typically miss catastrophic backtracking patterns.
 
-6. **Appropriate severity calibration**: CORS misconfiguration (exp 7) was correctly rated as WARNING rather than CRITICAL, showing the model applies judgment rather than blanket flagging.
+6. **Prompt-steerable severity**: The CORS experiment (7 vs 7c) demonstrates that severity classifications can be tuned via prompt engineering to match organizational security policy.
 
-7. **Concurrency is the hardest class**: The race condition (exp 10) was the only partial miss, which aligns with the difficulty of static concurrency analysis even for human reviewers.
+7. **Concurrency is the hardest class**: The race condition (exp 10) was the only persistent miss across all model sizes and prompt styles, which aligns with the difficulty of static concurrency analysis even for human reviewers.
 
 ## Enterprise Value Proposition
 
