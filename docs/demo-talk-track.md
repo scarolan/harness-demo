@@ -72,6 +72,52 @@ gh pr create --title "Add user search" --body "Search users by name" --base main
 
 "Think about what just happened. A developer pushed code. An AI model running on the customer's own hardware — not OpenAI, not Anthropic, not any cloud API — reviewed that code in 20 seconds, found a critical security vulnerability, blocked the deployment, and reported the status back to GitHub. No code left the network. Full audit trail in Harness."
 
+**Step 7**: Show the Output tab on the AI Code Review step.
+
+"And look at the Output tab — structured data from the review. Verdict: BLOCKED. Critical count: 1. The findings right there, no log scrolling needed. These output variables can be consumed by downstream steps or external systems."
+
+**Step 8**: Fix the code. Push to the same branch.
+
+Replace the vulnerable search endpoint with the fixed version:
+
+```python
+@app.get("/api/search")
+def search_users(query: str):
+    try:
+        with sqlite3.connect(settings.DATABASE_PATH) as conn:
+            cursor = conn.execute(
+                "SELECT id, username, display_name FROM users WHERE username LIKE ?",
+                (f"%{query}%",),
+            )
+            results = [
+                {"id": r[0], "username": r[1], "display_name": r[2]}
+                for r in cursor.fetchall()
+            ]
+    except sqlite3.Error:
+        raise HTTPException(status_code=503, detail="database unavailable")
+    return {"results": results}
+```
+
+```bash
+git add app/main.py
+git commit -m "Fix SQL injection - use parameterized query"
+git push
+```
+
+**Step 9**: Switch to Harness. Show the pipeline re-running.
+
+"We fixed the injection — parameterized query, explicit columns, proper error handling. The pipeline is re-running automatically."
+
+**Step 10**: Show the AI Code Review step passing. Click Output tab.
+
+"Verdict: PASSED_WITH_WARNINGS. No more critical findings. The Security Gate passes. Tests run. Image builds. Canary deploy to Kubernetes."
+
+**Step 11**: Switch to GitHub. Show checks passing, merge button enabled.
+
+"GitHub checks are green. The merge button is enabled. This code is safe to ship."
+
+*Optional*: Click merge to complete the story.
+
 ## Act 3: The Business Value (2 minutes)
 
 "So why does this matter for an enterprise customer?
