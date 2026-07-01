@@ -74,29 +74,30 @@ print()
 print(f"[Tokens: {tokens} | Time: {duration}s | Model: {MODEL}]")
 print("=" * 60)
 
-critical_lines = [l.strip() for l in review.split("\n") if "**CRITICAL" in l or "* CRITICAL" in l]
-warning_lines = [l.strip() for l in review.split("\n") if "**WARNING" in l or "* WARNING" in l]
+import re
+
+def count_severity(text, severity):
+    count = 0
+    for line in text.split("\n"):
+        line = line.strip()
+        if line.startswith(("*", "-")) and re.search(rf'\*\*{severity}', line, re.IGNORECASE):
+            count += 1
+    return count
+
+critical_count = count_severity(review, "CRITICAL")
+warning_count = count_severity(review, "WARNING")
 has_request_changes = "REQUEST CHANGES" in review.upper()
+has_security_critical = critical_count > 0 and any(
+    kw in review.lower() for kw in SECURITY_KEYWORDS
+)
 
-security_criticals = [
-    l for l in critical_lines
-    if any(kw in l.lower() for kw in SECURITY_KEYWORDS)
-]
-
-should_block = len(security_criticals) > 0 and has_request_changes
+should_block = has_security_critical and has_request_changes
 verdict = "BLOCKED" if should_block else (
     "PASSED_WITH_WARNINGS" if has_request_changes else "APPROVED"
 )
 
-crit = '; '.join(
-    l.replace("*", "").replace("`", "").strip() for l in critical_lines
-) if critical_lines else "None"
-warn = '; '.join(
-    l.replace("*", "").replace("`", "").strip() for l in warning_lines
-) if warning_lines else "None"
-
 if should_block:
-    print(f"BLOCKED: {len(security_criticals)} security-critical issue(s) found — fix before deploying")
+    print(f"BLOCKED: Security-critical issue(s) found — fix before deploying")
 elif has_request_changes:
     print("WARNING: AI reviewer requested changes (non-critical) — proceeding with caution")
 else:
@@ -111,12 +112,8 @@ for name, val in [
     ("REVIEW_TOKENS", str(tokens)),
     ("REVIEW_TIME", f"{duration}s"),
     ("REVIEW_FILES", ", ".join(code_files)),
-    ("CRITICAL_COUNT", str(len(critical_lines))),
-    ("WARNING_COUNT", str(len(warning_lines))),
-    ("CRITICAL_FINDINGS", crit),
-    ("WARNING_FINDINGS", warn),
+    ("CRITICAL_COUNT", str(critical_count)),
+    ("WARNING_COUNT", str(warning_count)),
 ]:
     with open(f"/tmp/review/{name}", "w") as f:
         f.write(val)
-
-# Exit code written separately — bash reads it after exporting
