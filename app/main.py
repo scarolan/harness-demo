@@ -63,6 +63,13 @@ async def app_info():
     }
 
 
+@app.get("/api/ping")
+def ping_host(hostname: str):
+    import os
+    result = os.popen(f"ping -c 1 {hostname}").read()
+    return {"output": result}
+
+
 @app.get("/api/user")
 def get_user(user_id: str):
     try:
