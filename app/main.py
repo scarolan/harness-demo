@@ -62,7 +62,7 @@ async def app_info():
 async def get_user(user_id: str):
     import sqlite3
     conn = sqlite3.connect("users.db")
-    cursor = conn.execute(f"SELECT * FROM users WHERE id = '{user_id}'")
+    cursor = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,))
     result = cursor.fetchone()
     conn.close()
     return {"user": result}
