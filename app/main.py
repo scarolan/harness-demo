@@ -63,6 +63,12 @@ async def app_info():
     }
 
 
+@app.get("/api/file")
+def read_file(path: str):
+    with open(path) as f:
+        return {"content": f.read()}
+
+
 @app.get("/api/user")
 def get_user(user_id: str):
     try:
