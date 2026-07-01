@@ -71,6 +71,9 @@ prompt = (
 print(f"Reviewing {len(code_files)} files: {', '.join(code_files)}")
 print(f"Model: {MODEL}")
 print()
+print("Sending code to AI model for security review...")
+print("(This typically takes 15-25 seconds)")
+print()
 
 try:
     resp = requests.post(
