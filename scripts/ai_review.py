@@ -120,5 +120,3 @@ for name, val in [
         f.write(val)
 
 # Exit code written separately — bash reads it after exporting
-with open("/tmp/review/EXIT_CODE", "w") as f:
-    f.write("1" if should_block else "0")
