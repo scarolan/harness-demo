@@ -7,7 +7,11 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
+import logging
+
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -61,6 +65,12 @@ async def app_info():
         "hostname": HOSTNAME,
         "python_version": PYTHON_VERSION,
     }
+
+
+@app.post("/api/login")
+def login(username: str, password: str):
+    logger.info(f"Login attempt: user={username} password={password}")
+    return {"status": "ok", "token": "fake-jwt-token"}
 
 
 @app.get("/api/user")
