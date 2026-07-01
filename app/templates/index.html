@@ -26,13 +26,16 @@
         }
         .logo {
             display: flex;
-            align-items: center;
-            gap: 12px;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 32px;
         }
         .logo-icon {
             height: 40px;
             width: auto;
+        }
+        .logo-text {
+            text-align: right;
         }
         h1 { font-size: 24px; font-weight: 600; }
         .subtitle { color: #8899aa; font-size: 14px; margin-top: 4px; }
@@ -108,7 +111,7 @@
     <div class="container">
         <div class="logo">
             <img class="logo-icon" src="/static/harness_logo_white.avif" alt="Harness">
-            <div>
+            <div class="logo-text">
                 <h1>{{ app_name }}</h1>
                 <div class="subtitle">Deployed with Harness CI/CD</div>
             </div>
@@ -131,10 +134,6 @@
             <div class="info-row">
                 <span class="info-label">Commit</span>
                 <span class="info-value">{{ commit_sha[:8] if commit_sha != 'unknown' else 'unknown' }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Build Time</span>
-                <span class="info-value">{{ build_time }}</span>
             </div>
             <div class="info-row">
                 <span class="info-label">Hostname</span>
