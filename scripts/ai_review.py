@@ -40,7 +40,7 @@ try:
             "model": MODEL,
             "prompt": prompt,
             "stream": False,
-            "options": {"temperature": 0.3},
+            "options": {"temperature": 0.3, "num_predict": -1},
         },
         timeout=120,
     )
