@@ -1,7 +1,9 @@
+import pathlib
 import platform
+import sqlite3
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
@@ -13,9 +15,12 @@ app = FastAPI(
     docs_url="/docs",
 )
 
-templates = Jinja2Templates(directory="app/templates")
+BASE_DIR = pathlib.Path(__file__).resolve().parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 start_time = datetime.now(timezone.utc)
+HOSTNAME = platform.node()
+PYTHON_VERSION = platform.python_version()
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -29,7 +34,7 @@ async def landing_page(request: Request):
             "environment": settings.ENVIRONMENT,
             "commit_sha": settings.COMMIT_SHA,
             "build_time": settings.BUILD_TIME,
-            "hostname": platform.node(),
+            "hostname": HOSTNAME,
         },
     )
 
@@ -53,24 +58,22 @@ async def app_info():
         "deploy_strategy": settings.DEPLOY_STRATEGY,
         "commit_sha": settings.COMMIT_SHA,
         "build_time": settings.BUILD_TIME,
-        "hostname": platform.node(),
-        "python_version": platform.python_version(),
+        "hostname": HOSTNAME,
+        "python_version": PYTHON_VERSION,
     }
 
 
 @app.get("/api/user")
 def get_user(user_id: str):
-    import sqlite3
     try:
-        conn = sqlite3.connect(settings.DATABASE_PATH)
-        cursor = conn.execute(
-            "SELECT id, username, display_name FROM users WHERE id = ?",
-            (user_id,),
-        )
-        result = cursor.fetchone()
-        conn.close()
+        with sqlite3.connect(settings.DATABASE_PATH) as conn:
+            cursor = conn.execute(
+                "SELECT id, username, display_name FROM users WHERE id = ?",
+                (user_id,),
+            )
+            result = cursor.fetchone()
     except sqlite3.Error:
-        return {"error": "database unavailable"}
+        raise HTTPException(status_code=503, detail="database unavailable")
     if result is None:
-        return {"error": "user not found"}
+        raise HTTPException(status_code=404, detail="user not found")
     return {"user": {"id": result[0], "username": result[1], "display_name": result[2]}}
