@@ -62,12 +62,15 @@ async def app_info():
 def get_user(user_id: str):
     import sqlite3
     try:
-        conn = sqlite3.connect("users.db")
-        cursor = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+        conn = sqlite3.connect(settings.DATABASE_PATH)
+        cursor = conn.execute(
+            "SELECT id, username, display_name FROM users WHERE id = ?",
+            (user_id,),
+        )
         result = cursor.fetchone()
         conn.close()
     except sqlite3.Error:
         return {"error": "database unavailable"}
     if result is None:
         return {"error": "user not found"}
-    return {"user": result}
+    return {"user": {"id": result[0], "username": result[1], "display_name": result[2]}}
