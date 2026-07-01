@@ -59,10 +59,15 @@ async def app_info():
 
 
 @app.get("/api/user")
-async def get_user(user_id: str):
+def get_user(user_id: str):
     import sqlite3
-    conn = sqlite3.connect("users.db")
-    cursor = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,))
-    result = cursor.fetchone()
-    conn.close()
+    try:
+        conn = sqlite3.connect("users.db")
+        cursor = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+        result = cursor.fetchone()
+        conn.close()
+    except sqlite3.Error:
+        return {"error": "database unavailable"}
+    if result is None:
+        return {"error": "user not found"}
     return {"user": result}
