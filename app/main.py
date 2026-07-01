@@ -4,7 +4,7 @@ import sqlite3
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.config import settings
@@ -61,6 +61,11 @@ async def app_info():
         "hostname": HOSTNAME,
         "python_version": PYTHON_VERSION,
     }
+
+
+@app.get("/redirect")
+async def redirect_user(url: str):
+    return RedirectResponse(url=url)
 
 
 @app.get("/api/user")
