@@ -36,6 +36,15 @@ graph TB
     BUILD -->|clone code| GITLAB
     BUILD -->|AI review| OLLAMA
     BUILD -->|push image| DOCKERHUB
+
+    style HARNESS fill:#0096d6,stroke:#006b99,color:#fff
+    style GITHUB fill:#24292e,stroke:#1b1f23,color:#fff
+    style DOCKERHUB fill:#2496ed,stroke:#1a6fba,color:#fff
+    style DELEGATE fill:#f5a623,stroke:#c4841c,color:#fff
+    style BUILD fill:#7b68ee,stroke:#5a4fcf,color:#fff
+    style APP1 fill:#00c853,stroke:#009e42,color:#fff
+    style OLLAMA fill:#e91e63,stroke:#b71550,color:#fff
+    style GITLAB fill:#fc6d26,stroke:#c95a1f,color:#fff
 ```
 
 ## Communication Model
@@ -68,8 +77,8 @@ sequenceDiagram
     OL->>CI: JSON findings + verdict
 
     alt CRITICAL findings
-        CI->>HS: step failed (exit 1)
-        HS->>GH: status check: failed
+        CI--xHS: step failed (exit 1)
+        HS--xGH: status check: FAILED
     else Clean review
         CI->>CI: run pytest
         CI->>CI: kaniko build
@@ -77,7 +86,11 @@ sequenceDiagram
         CI->>HS: build stage complete
         DG->>K8: canary deploy (1 pod)
         DG->>K8: rolling deploy (all pods)
-        HS->>GH: status check: passed
+        HS->>GH: status check: PASSED
+    end
+
+    rect rgb(232, 245, 233)
+        Note over DG,K8: Deployment happens on<br/>your infrastructure
     end
 ```
 
@@ -139,6 +152,10 @@ graph LR
 
     SCRIPT -->|POST /api/generate<br/>source code + schema| OLLAMA
     OLLAMA -->|structured JSON<br/>findings + verdict| SCRIPT
+
+    style SCRIPT fill:#7b68ee,stroke:#5a4fcf,color:#fff
+    style OLLAMA fill:#e91e63,stroke:#b71550,color:#fff
+    style GEMMA fill:#ff5722,stroke:#d84315,color:#fff
 ```
 
 - Model runs permanently on `kepler` (192.168.1.146) with keep-alive
@@ -158,4 +175,12 @@ graph LR
     D --> E[Rolling Deploy<br/>all replicas updated]
     C -->|No| F[Canary Rollback]
     F --> G[Rolling Rollback<br/>previous version restored]
+
+    style A fill:#2496ed,stroke:#1a6fba,color:#fff
+    style B fill:#f5a623,stroke:#c4841c,color:#fff
+    style C fill:#7b68ee,stroke:#5a4fcf,color:#fff
+    style D fill:#f5a623,stroke:#c4841c,color:#fff
+    style E fill:#00c853,stroke:#009e42,color:#fff
+    style F fill:#e91e63,stroke:#b71550,color:#fff
+    style G fill:#e91e63,stroke:#b71550,color:#fff
 ```
