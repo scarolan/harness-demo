@@ -141,9 +141,11 @@ for attempt in range(1, MAX_RETRIES + 1):
         review = json.loads(raw)
         break
     except json.JSONDecodeError:
-        decoder = json.JSONDecoder()
+        start = raw.find("{")
+        if start > 0:
+            raw = raw[start:]
         try:
-            review, _ = decoder.raw_decode(raw)
+            review, _ = json.JSONDecoder().raw_decode(raw)
             break
         except json.JSONDecodeError:
             print(f"WARNING: Attempt {attempt} — model returned invalid JSON")
