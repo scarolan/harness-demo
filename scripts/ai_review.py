@@ -71,42 +71,55 @@ prompt = (
 print(f"Reviewing {len(code_files)} files: {', '.join(code_files)}")
 print(f"Model: {MODEL}")
 print()
-print("Sending code to AI model for security review...")
-print("(This typically takes 15-25 seconds)")
-print()
+MAX_RETRIES = 3
+review = None
 
-try:
-    resp = requests.post(
-        OLLAMA_URL,
-        json={
-            "model": MODEL,
-            "prompt": prompt,
-            "format": REVIEW_SCHEMA,
-            "stream": False,
-            "options": {"temperature": 0.3, "num_predict": -1},
-        },
-        timeout=120,
-    )
-    result = resp.json()
-except Exception as e:
-    print(f"ERROR: Could not reach Ollama at {OLLAMA_URL}: {e}")
-    print("AI review is required — cannot proceed without it.")
-    sys.exit(1)
+for attempt in range(1, MAX_RETRIES + 1):
+    print(f"Sending code to AI model for security review (attempt {attempt}/{MAX_RETRIES})...")
+    if attempt == 1:
+        print("(This typically takes 15-25 seconds)")
+    print()
 
-raw = result.get("response", "{}")
-tokens = result.get("eval_count", 0)
-duration = round(result.get("eval_duration", 0) / 1e9, 1)
-
-try:
-    review = json.loads(raw)
-except json.JSONDecodeError:
-    decoder = json.JSONDecoder()
     try:
-        review, _ = decoder.raw_decode(raw)
+        resp = requests.post(
+            OLLAMA_URL,
+            json={
+                "model": MODEL,
+                "prompt": prompt,
+                "format": REVIEW_SCHEMA,
+                "stream": False,
+                "options": {"temperature": 0.3, "num_predict": -1},
+            },
+            timeout=120,
+        )
+        result = resp.json()
+    except Exception as e:
+        print(f"WARNING: Attempt {attempt} — could not reach Ollama: {e}")
+        if attempt == MAX_RETRIES:
+            print("AI review is required — cannot proceed without it.")
+            sys.exit(1)
+        print("Retrying...")
+        continue
+
+    raw = result.get("response", "{}")
+    tokens = result.get("eval_count", 0)
+    duration = round(result.get("eval_duration", 0) / 1e9, 1)
+
+    try:
+        review = json.loads(raw)
+        break
     except json.JSONDecodeError:
-        print(f"ERROR: Model returned invalid JSON — review failed")
-        print(raw[:500])
-        sys.exit(1)
+        decoder = json.JSONDecoder()
+        try:
+            review, _ = decoder.raw_decode(raw)
+            break
+        except json.JSONDecodeError:
+            print(f"WARNING: Attempt {attempt} — model returned invalid JSON")
+            if attempt == MAX_RETRIES:
+                print(f"ERROR: All {MAX_RETRIES} attempts failed — review could not complete")
+                print(raw[:500])
+                sys.exit(1)
+            print("Retrying...")
 
 # Pretty-print findings for the log tab
 findings = review.get("findings", [])
