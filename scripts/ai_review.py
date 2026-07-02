@@ -88,7 +88,7 @@ for attempt in range(1, MAX_RETRIES + 1):
                 "prompt": prompt,
                 "format": REVIEW_SCHEMA,
                 "stream": False,
-                "options": {"temperature": 0.3, "num_predict": -1},
+                "options": {"temperature": 0.3, "num_predict": -1, "num_ctx": 16384},
             },
             timeout=120,
         )
