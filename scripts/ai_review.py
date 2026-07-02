@@ -100,9 +100,13 @@ duration = round(result.get("eval_duration", 0) / 1e9, 1)
 try:
     review = json.loads(raw)
 except json.JSONDecodeError:
-    print(f"ERROR: Model returned invalid JSON — review failed")
-    print(raw[:500])
-    sys.exit(1)
+    decoder = json.JSONDecoder()
+    try:
+        review, _ = decoder.raw_decode(raw)
+    except json.JSONDecodeError:
+        print(f"ERROR: Model returned invalid JSON — review failed")
+        print(raw[:500])
+        sys.exit(1)
 
 # Pretty-print findings for the log tab
 findings = review.get("findings", [])
