@@ -22,7 +22,7 @@ graph TB
                 APP1[harness-demo pods x2<br/>Python FastAPI<br/>NodePort 30080]
             end
         end
-        OLLAMA[Ollama on kepler<br/>Gemma 4 26B QAT<br/>192.168.1.146:11434]
+        OLLAMA[Ollama on host<br/>Gemma 4 26B QAT<br/>host.docker.internal:11434]
         GITLAB[GitLab on-prem<br/>gitlab.local]
     end
 
@@ -158,7 +158,7 @@ graph LR
     style GEMMA fill:#ff5722,stroke:#d84315,color:#fff
 ```
 
-- Model runs permanently on `kepler` (192.168.1.146) with keep-alive
+- Model runs on local host via WSL2/Windows with keep-alive
 - Context window: 16,384 tokens (set via `num_ctx`)
 - Structured JSON output via Ollama schema enforcement
 - Review time: ~15-25 seconds per run
