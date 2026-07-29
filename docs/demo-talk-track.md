@@ -60,6 +60,14 @@ gh pr create --title "Add user search" --body "Search users by name" --base main
 
 "The webhook fired automatically. Harness is now cloning the code and sending it to our on-prem Gemma 4 model for review."
 
+*Optional — if the `harness` CLI is installed:*
+
+```bash
+harness list execution --limit 1
+```
+
+"Same view from the terminal — every pipeline resource is a first-class API object. Handy for scripting, CI-of-your-CI, or driving Harness from an AI agent."
+
 **Step 4**: Wait ~60 seconds. Click into the AI Code Review step when it fails.
 
 "And there it is — **CRITICAL: SQL Injection, A03:2021**. The AI identified the f-string injection, provided the OWASP classification, and even gave the fix: use parameterized queries. The pipeline is blocked. No tests run. No image builds. No deployment happens."
@@ -153,6 +161,7 @@ Before the demo:
 - [ ] Make sure you're on `main` branch and it's clean (`git status`)
 - [ ] Delete any leftover `demo/*` branches from practice runs
 - [ ] Have Claude Code open with MCP server connected (for Q&A)
+- [ ] *Optional*: `harness auth status` — confirm the CLI is logged in to the sandbox org/project if you plan to use the CLI beat
 
 ## Likely Technical Questions
 
