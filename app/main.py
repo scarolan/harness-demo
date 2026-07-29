@@ -79,3 +79,12 @@ def get_user(user_id: str):
     if result is None:
         raise HTTPException(status_code=404, detail="user not found")
     return {"user": {"id": result[0], "username": result[1], "display_name": result[2]}}
+
+@app.get("/api/search")
+def search_users(query: str):
+    import sqlite3
+    conn = sqlite3.connect("users.db")
+    cursor = conn.execute(f"SELECT * FROM users WHERE name LIKE '%{query}%'")
+    results = cursor.fetchall()
+    conn.close()
+    return {"results": results}
