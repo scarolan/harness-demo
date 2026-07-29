@@ -82,9 +82,16 @@ def get_user(user_id: str):
 
 @app.get("/api/search")
 def search_users(query: str):
-    import sqlite3
-    conn = sqlite3.connect("users.db")
-    cursor = conn.execute(f"SELECT * FROM users WHERE name LIKE '%{query}%'")
-    results = cursor.fetchall()
-    conn.close()
+    try:
+        with sqlite3.connect(settings.DATABASE_PATH) as conn:
+            cursor = conn.execute(
+                "SELECT id, username, display_name FROM users WHERE username LIKE ?",
+                (f"%{query}%",),
+            )
+            results = [
+                {"id": r[0], "username": r[1], "display_name": r[2]}
+                for r in cursor.fetchall()
+            ]
+    except sqlite3.Error:
+        raise HTTPException(status_code=503, detail="database unavailable")
     return {"results": results}
