@@ -5,11 +5,13 @@ import sys
 
 import requests
 
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://host.docker.internal:11434").rstrip("/")
 OLLAMA_URLS = [
+    f"{OLLAMA_URL}/api/generate",
     "http://localhost:11434/api/generate",
     "http://host.docker.internal:11434/api/generate",
 ]
-MODEL = "gemma4:26b-a4b-it-qat"
+MODEL = os.environ.get("OLLAMA_MODEL", "gemma4:26b")
 
 SECURITY_KEYWORDS = [
     "injection", "sqli", "xss", "csrf", "ssrf", "redirect", "traversal",

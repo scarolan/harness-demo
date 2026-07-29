@@ -1,0 +1,206 @@
+pipeline:
+  name: harness-demo
+  identifier: harness_demo
+  projectIdentifier: harness_demo_seanc
+  orgIdentifier: sandbox
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: github
+        repoName: harness-demo
+        build: <+input>
+  stages:
+    - stage:
+        name: Build and Test
+        identifier: Build_and_Test
+        type: CI
+        spec:
+          cloneCodebase: true
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: k8s_local
+              namespace: harness-ci
+              automountServiceAccountToken: true
+              nodeSelector: {}
+              os: Linux
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: AI Code Review
+                  identifier: AI_Code_Review
+                  spec:
+                    connectorRef: dockerhub
+                    image: python:3.12-slim
+                    shell: Sh
+                    command: |-
+                      apt-get update && apt-get install -y --no-install-recommends git curl >/dev/null
+                      pip install --no-cache-dir --quiet requests
+                      git fetch origin main --depth=1 || true
+                      python3 scripts/ai_review.py
+                      mkdir -p /harness/output
+                      cp -r /tmp/review/* /harness/output/ 2>/dev/null || true
+                    envVariables:
+                      OLLAMA_URL: http://host.docker.internal:11434
+                      OLLAMA_MODEL: gemma4:26b
+                    outputVariables:
+                      - name: REVIEW_VERDICT
+                        type: String
+                        value: REVIEW_VERDICT
+                      - name: REVIEW_MODEL
+                        type: String
+                        value: REVIEW_MODEL
+                      - name: REVIEW_TOKENS
+                        type: String
+                        value: REVIEW_TOKENS
+                      - name: REVIEW_TIME
+                        type: String
+                        value: REVIEW_TIME
+                      - name: REVIEW_FILES
+                        type: String
+                        value: REVIEW_FILES
+                      - name: CRITICAL_COUNT
+                        type: String
+                        value: CRITICAL_COUNT
+                      - name: WARNING_COUNT
+                        type: String
+                        value: WARNING_COUNT
+                      - name: CRITICAL_FINDINGS
+                        type: String
+                        value: CRITICAL_FINDINGS
+                      - name: WARNING_FINDINGS
+                        type: String
+                        value: WARNING_FINDINGS
+                    resources:
+                      limits:
+                        memory: 512Mi
+                        cpu: 500m
+                  timeout: 5m
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Security Gate
+                  identifier: Security_Gate
+                  spec:
+                    connectorRef: dockerhub
+                    image: alpine:3.20
+                    shell: Sh
+                    command: |-
+                      VERDICT="<+execution.steps.AI_Code_Review.output.outputVariables.REVIEW_VERDICT>"
+                      CRIT="<+execution.steps.AI_Code_Review.output.outputVariables.CRITICAL_COUNT>"
+                      echo "AI verdict: $VERDICT ($CRIT critical findings)"
+                      if [ "$VERDICT" = "BLOCKED" ]; then
+                        echo "SECURITY GATE FAILED — pipeline blocked."
+                        exit 1
+                      fi
+                      echo "Security gate passed."
+                    resources:
+                      limits:
+                        memory: 128Mi
+                        cpu: 100m
+                  timeout: 2m
+              - step:
+                  type: Run
+                  name: Run Tests
+                  identifier: Run_Tests
+                  spec:
+                    connectorRef: dockerhub
+                    image: python:3.12-slim
+                    shell: Sh
+                    command: |-
+                      pip install --no-cache-dir -q -r requirements.txt pytest
+                      pytest -v tests/
+                    resources:
+                      limits:
+                        memory: 512Mi
+                        cpu: 500m
+                  timeout: 5m
+              - step:
+                  type: Template
+                  name: Build and Push Image
+                  identifier: Build_and_Push_Image
+                  template:
+                    templateRef: docker_build_push
+                    versionLabel: v1
+                    templateInputs:
+                      type: BuildAndPushDockerRegistry
+                      spec:
+                        connectorRef: dockerhub
+                        repo: carolanio/harness-demo
+                        tags:
+                          - <+codebase.shortCommitSha>
+                        dockerfile: Dockerfile
+                        context: .
+    - stage:
+        name: Deploy to Dev
+        identifier: Deploy_to_Dev
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: harness_demo
+            serviceInputs:
+              serviceDefinition:
+                type: Kubernetes
+                spec:
+                  artifacts:
+                    primary:
+                      primaryArtifactRef: dockerhub
+                      sources:
+                        - identifier: dockerhub
+                          type: DockerRegistry
+                          spec:
+                            tag: <+codebase.shortCommitSha>
+          environment:
+            environmentRef: dev
+            deployToAll: false
+            infrastructureDefinitions:
+              - identifier: rancher_desktop
+          execution:
+            steps:
+              - step:
+                  name: Canary Deployment
+                  identifier: canaryDeployment
+                  type: K8sCanaryDeploy
+                  timeout: 10m
+                  spec:
+                    instanceSelection:
+                      type: Count
+                      spec:
+                        count: 1
+                    skipDryRun: false
+              - step:
+                  name: Canary Delete
+                  identifier: canaryDelete
+                  type: K8sCanaryDelete
+                  timeout: 5m
+                  spec: {}
+              - step:
+                  name: Rolling Deployment
+                  identifier: rollingDeployment
+                  type: K8sRollingDeploy
+                  timeout: 10m
+                  spec:
+                    skipDryRun: false
+            rollbackSteps:
+              - step:
+                  name: Canary Delete
+                  identifier: rollbackCanaryDelete
+                  type: K8sCanaryDelete
+                  timeout: 5m
+                  spec: {}
+              - step:
+                  name: Rolling Rollback
+                  identifier: rollingRollback
+                  type: K8sRollingRollback
+                  timeout: 10m
+                  spec: {}
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback

@@ -1,0 +1,38 @@
+trigger:
+  name: On Pull Request
+  identifier: on_pull_request
+  enabled: true
+  description: Run on PR open/reopen/synchronize
+  tags: {}
+  orgIdentifier: sandbox
+  projectIdentifier: harness_demo_seanc
+  pipelineIdentifier: harness_demo
+  source:
+    type: Webhook
+    spec:
+      type: Github
+      spec:
+        type: PullRequest
+        spec:
+          connectorRef: github
+          autoAbortPreviousExecutions: true
+          payloadConditions:
+            - key: targetBranch
+              operator: Equals
+              value: main
+          headerConditions: []
+          repoName: harness-demo
+          actions:
+            - Open
+            - Reopen
+            - Synchronize
+  inputYaml: |
+    pipeline:
+      identifier: harness_demo
+      properties:
+        ci:
+          codebase:
+            build:
+              type: PR
+              spec:
+                number: <+trigger.prNumber>
