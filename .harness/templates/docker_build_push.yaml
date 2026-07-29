@@ -12,8 +12,7 @@ template:
     spec:
       connectorRef: <+input>
       repo: <+input>
-      tags:
-        - <+input>
+      tags: <+input>
       dockerfile: <+input>
       context: <+input>
       buildArgs:
