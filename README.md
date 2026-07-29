@@ -112,12 +112,17 @@ Full analysis with model comparisons (26B QAT vs 31B) and prompt engineering res
 
 ### Local Development
 
+Instead of running the Python app directly, we now deploy everything to Kubernetes locally.
+
 ```bash
+# Build and deploy the app to your local Kubernetes cluster
+./scripts/deploy-local.sh
+
+# Run tests
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 pytest -v tests/
-uvicorn app.main:app --host 0.0.0.0 --port 8080
 ```
 
 ## Project Structure

@@ -1,0 +1,35 @@
+trigger:
+  name: On Push to main
+  identifier: on_push_main
+  enabled: true
+  description: Run on push to main branch
+  tags: {}
+  orgIdentifier: sandbox
+  projectIdentifier: harness_demo_seanc
+  pipelineIdentifier: harness_demo
+  source:
+    type: Webhook
+    spec:
+      type: Github
+      spec:
+        type: Push
+        spec:
+          connectorRef: github
+          autoAbortPreviousExecutions: false
+          payloadConditions:
+            - key: targetBranch
+              operator: Equals
+              value: main
+          headerConditions: []
+          repoName: harness-demo
+          actions: []
+  inputYaml: |
+    pipeline:
+      identifier: harness_demo
+      properties:
+        ci:
+          codebase:
+            build:
+              type: branch
+              spec:
+                branch: <+trigger.branch>

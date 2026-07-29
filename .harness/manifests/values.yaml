@@ -1,0 +1,4 @@
+namespace: harness-demo
+replicas: 2
+image: carolanio/harness-demo:latest
+appEnvironment: production

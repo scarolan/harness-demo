@@ -5,8 +5,13 @@ import sys
 
 import requests
 
-OLLAMA_URL = "http://192.168.1.146:11434/api/generate"
-MODEL = "gemma4:26b-a4b-it-qat"
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://host.docker.internal:11434").rstrip("/")
+OLLAMA_URLS = [
+    f"{OLLAMA_URL}/api/generate",
+    "http://localhost:11434/api/generate",
+    "http://host.docker.internal:11434/api/generate",
+]
+MODEL = os.environ.get("OLLAMA_MODEL", "gemma4:26b")
 
 SECURITY_KEYWORDS = [
     "injection", "sqli", "xss", "csrf", "ssrf", "redirect", "traversal",
@@ -112,33 +117,43 @@ for attempt in range(1, MAX_RETRIES + 1):
         print("(This typically takes 15-25 seconds)")
     print()
 
-    try:
-        resp = requests.post(
-            OLLAMA_URL,
-            json={
-                "model": MODEL,
-                "prompt": prompt,
-                "format": REVIEW_SCHEMA,
-                "stream": False,
-                "options": {
-                    "temperature": 0.3,
-                    "num_predict": 4096,
-                    "num_ctx": 32768,
-                    "repeat_penalty": 1.3,
-                    "repeat_last_n": 256,
-                    "frequency_penalty": 0.5,
+    resp = None
+    for url in OLLAMA_URLS:
+        try:
+            resp = requests.post(
+                url,
+                json={
+                    "model": MODEL,
+                    "prompt": prompt,
+                    "format": REVIEW_SCHEMA,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.3,
+                        "num_predict": 4096,
+                        "num_ctx": 32768,
+                        "repeat_penalty": 1.3,
+                        "repeat_last_n": 256,
+                        "frequency_penalty": 0.5,
+                    },
                 },
-            },
-            timeout=120,
-        )
-        result = resp.json()
-    except Exception as e:
-        print(f"WARNING: Attempt {attempt} — could not reach Ollama: {e}")
+                timeout=120,
+            )
+            break # Success, stop trying URLs
+        except Exception as e:
+            continue
+            
+    if not resp:
+        print(f"WARNING: Attempt {attempt} — could not reach Ollama at any URL.")
         if attempt == MAX_RETRIES:
             print("AI review is required — cannot proceed without it.")
             sys.exit(1)
         print("Retrying...")
         continue
+        
+    try:
+        result = resp.json()
+    except Exception as e:
+        print(f"WARNING: Attempt {attempt} — invalid response from Ollama: {e}")
 
     raw = result.get("response", "{}")
     tokens = result.get("eval_count", 0)

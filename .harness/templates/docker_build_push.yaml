@@ -1,0 +1,20 @@
+template:
+  name: Docker Build and Push
+  identifier: docker_build_push
+  versionLabel: v1
+  type: Step
+  projectIdentifier: harness_demo_seanc
+  orgIdentifier: sandbox
+  tags: {}
+  spec:
+    type: BuildAndPushDockerRegistry
+    timeout: 20m
+    spec:
+      connectorRef: <+input>
+      repo: <+input>
+      tags: <+input>
+      dockerfile: <+input>
+      context: <+input>
+      buildArgs:
+        COMMIT_SHA: <+codebase.commitSha>
+        BUILD_TIME: <+pipeline.startTs>
