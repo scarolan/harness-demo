@@ -1,4 +1,4 @@
 namespace: harness-demo
 replicas: 2
-image: carolanio/harness-demo:latest
+image: <+artifact.image>
 appEnvironment: production

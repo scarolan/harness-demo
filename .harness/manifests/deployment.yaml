@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: harness-demo
-          image: <+artifact.image>
+          image: {{.Values.image}}
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
