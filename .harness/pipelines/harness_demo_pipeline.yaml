@@ -97,14 +97,55 @@ pipeline:
                     image: alpine:3.20
                     shell: Sh
                     command: |-
-                      VERDICT="<+execution.steps.AI_Code_Review.output.outputVariables.REVIEW_VERDICT>"
-                      CRIT="<+execution.steps.AI_Code_Review.output.outputVariables.CRITICAL_COUNT>"
-                      echo "AI verdict: $VERDICT ($CRIT critical findings)"
+                      export VERDICT="<+execution.steps.AI_Code_Review.output.outputVariables.REVIEW_VERDICT>"
+                      export CRITICAL_COUNT="<+execution.steps.AI_Code_Review.output.outputVariables.CRITICAL_COUNT>"
+                      export WARNING_COUNT="<+execution.steps.AI_Code_Review.output.outputVariables.WARNING_COUNT>"
+                      export CRITICAL_FINDINGS="<+execution.steps.AI_Code_Review.output.outputVariables.CRITICAL_FINDINGS>"
+                      export WARNING_FINDINGS="<+execution.steps.AI_Code_Review.output.outputVariables.WARNING_FINDINGS>"
+                      export REVIEW_MODEL="<+execution.steps.AI_Code_Review.output.outputVariables.REVIEW_MODEL>"
+
+                      echo "============================================================"
+                      echo "SECURITY GATE"
+                      echo "============================================================"
+                      echo "AI verdict     : $VERDICT"
+                      echo "Model          : $REVIEW_MODEL"
+                      echo "Critical count : $CRITICAL_COUNT"
+                      echo "Warning count  : $WARNING_COUNT"
+                      [ -n "$CRITICAL_FINDINGS" ] && [ "$CRITICAL_FINDINGS" != "None" ] && \
+                        echo "Critical       : $CRITICAL_FINDINGS"
+                      [ -n "$WARNING_FINDINGS" ] && [ "$WARNING_FINDINGS" != "None" ] && \
+                        echo "Warnings       : $WARNING_FINDINGS"
+                      echo "============================================================"
+
                       if [ "$VERDICT" = "BLOCKED" ]; then
-                        echo "SECURITY GATE FAILED — pipeline blocked."
+                        export GATE_DECISION="BLOCKED"
+                        export GATE_REASON="$CRITICAL_COUNT critical finding(s): $CRITICAL_FINDINGS"
+                        echo "SECURITY GATE FAILED — $GATE_REASON"
                         exit 1
                       fi
-                      echo "Security gate passed."
+
+                      export GATE_DECISION="PASSED"
+                      if [ "$VERDICT" = "PASSED_WITH_WARNINGS" ]; then
+                        export GATE_REASON="$WARNING_COUNT warning(s), no criticals — allowing"
+                      elif [ "$VERDICT" = "APPROVED" ]; then
+                        export GATE_REASON="Clean review — no findings"
+                      else
+                        export GATE_REASON="$VERDICT — no criticals"
+                      fi
+                      echo "SECURITY GATE PASSED — $GATE_REASON"
+                    outputVariables:
+                      - name: GATE_DECISION
+                        type: String
+                        value: GATE_DECISION
+                      - name: GATE_REASON
+                        type: String
+                        value: GATE_REASON
+                      - name: CRITICAL_COUNT
+                        type: String
+                        value: CRITICAL_COUNT
+                      - name: WARNING_COUNT
+                        type: String
+                        value: WARNING_COUNT
                     resources:
                       limits:
                         memory: 128Mi
