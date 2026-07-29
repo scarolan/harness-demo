@@ -38,10 +38,19 @@ pipeline:
                     command: |-
                       apt-get update && apt-get install -y --no-install-recommends git curl >/dev/null
                       pip install --no-cache-dir --quiet requests
-                      git fetch origin main --depth=1 || true
+                      git config --global --add safe.directory /harness
+                      git config --global --add safe.directory '*'
+                      git fetch --depth=50 origin main || true
+                      DIFF_FILES=$(git diff --name-only origin/main -- app/ 2>/dev/null | wc -l)
+                      echo "Diff vs origin/main: $DIFF_FILES file(s) changed under app/"
                       python3 scripts/ai_review.py
-                      mkdir -p /harness/output
-                      cp -r /tmp/review/* /harness/output/ 2>/dev/null || true
+                      # Export /tmp/review/* as step env for Harness output variables
+                      for f in /tmp/review/*; do
+                        [ -f "$f" ] || continue
+                        name=$(basename "$f")
+                        export "$name"="$(cat "$f")"
+                        echo "$name=$(cat "$f")"
+                      done
                     envVariables:
                       OLLAMA_URL: http://host.docker.internal:11434
                       OLLAMA_MODEL: gemma4:26b
