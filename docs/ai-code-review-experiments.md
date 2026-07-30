@@ -5,7 +5,7 @@
 This document presents the results of 10 controlled experiments testing an on-prem LLM-powered code review gate integrated into a Harness CI/CD pipeline. The AI reviewer runs as a pipeline step, analyzing Python source code before tests and deployment. If it finds CRITICAL security issues, the pipeline is blocked and the code cannot be deployed.
 
 **Model**: Google Gemma 4 26B QAT (quantized) via Ollama
-**Infrastructure**: Self-hosted on `kepler.local` — no code leaves the network
+**Infrastructure**: Self-hosted on the local Windows host (`localhost:11434`) — no code leaves the network
 **Pipeline**: Harness CI/CD with webhook triggers, canary deployment to Kubernetes
 **Review time**: ~15-25 seconds per review
 
@@ -17,7 +17,7 @@ Developer pushes code
   → Harness pipeline triggered
   → AI Code Review step:
       1. Collects all Python source files
-      2. Sends to Gemma 4 on kepler.local via Ollama API
+      2. Sends to Gemma 4 on localhost via Ollama API
       3. Model reviews for security, quality, performance, best practices
       4. Returns VERDICT: APPROVE or REQUEST CHANGES
       5. CRITICAL findings → pipeline BLOCKED (exit 1)

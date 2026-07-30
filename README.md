@@ -92,8 +92,8 @@ Full analysis with model comparisons (26B QAT vs 31B) and prompt engineering res
 
 ### Prerequisites
 
-- Docker Desktop with Kubernetes enabled
-- Ollama running with `gemma4:26b-a4b-it-qat` model
+- Rancher Desktop with Kubernetes enabled
+- Ollama running on `localhost:11434` with the `gemma4:26b` model
 - Harness account with delegate installed
 - GitHub and DockerHub accounts
 

@@ -153,8 +153,8 @@ git push
 Before the demo:
 
 - [ ] `kubectl port-forward -n harness-demo svc/harness-demo 8080:80` (keep the app accessible)
-- [ ] Make sure Docker Desktop K8s is running (`kubectl get nodes`)
-- [ ] Make sure Ollama is running on kepler.local (`curl http://kepler.local:11434/api/tags`)
+- [ ] Make sure Rancher Desktop K8s is running (`kubectl config current-context` should be `rancher-desktop`, then `kubectl get nodes`)
+- [ ] Make sure Ollama is running on localhost (`curl http://localhost:11434/api/tags`)
 - [ ] Have the Harness UI open: pipeline view
 - [ ] Have GitHub open: the repo
 - [ ] Have `docs/ai-code-review-experiments.md` open in a browser tab

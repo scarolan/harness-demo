@@ -5,12 +5,8 @@ import sys
 
 import requests
 
-OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://host.docker.internal:11434").rstrip("/")
-OLLAMA_URLS = [
-    f"{OLLAMA_URL}/api/generate",
-    "http://localhost:11434/api/generate",
-    "http://host.docker.internal:11434/api/generate",
-]
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434").rstrip("/")
+OLLAMA_URLS = [f"{OLLAMA_URL}/api/generate"]
 MODEL = os.environ.get("OLLAMA_MODEL", "gemma4:26b")
 
 SECURITY_KEYWORDS = [
@@ -118,6 +114,7 @@ for attempt in range(1, MAX_RETRIES + 1):
     print()
 
     resp = None
+    last_error = None
     for url in OLLAMA_URLS:
         try:
             resp = requests.post(
@@ -140,10 +137,11 @@ for attempt in range(1, MAX_RETRIES + 1):
             )
             break # Success, stop trying URLs
         except Exception as e:
+            last_error = e
             continue
-            
+
     if not resp:
-        print(f"WARNING: Attempt {attempt} — could not reach Ollama at any URL.")
+        print(f"WARNING: Attempt {attempt} — could not reach Ollama at {OLLAMA_URL}: {last_error}")
         if attempt == MAX_RETRIES:
             print("AI review is required — cannot proceed without it.")
             sys.exit(1)

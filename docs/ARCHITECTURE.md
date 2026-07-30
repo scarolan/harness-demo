@@ -11,7 +11,7 @@ graph TB
     end
 
     subgraph Home Network
-        subgraph Docker Desktop Kubernetes
+        subgraph Rancher Desktop Kubernetes
             subgraph harness-delegate-ng
                 DELEGATE[demo-delegate pod<br/>Helm chart install<br/>Polls Harness for tasks]
             end
@@ -22,7 +22,7 @@ graph TB
                 APP1[harness-demo pods x2<br/>Python FastAPI<br/>NodePort 30080]
             end
         end
-        OLLAMA[Ollama on host<br/>Gemma 4 26B QAT<br/>host.docker.internal:11434]
+        OLLAMA[Ollama on host<br/>Gemma 4 26B QAT<br/>localhost:11434]
         GITLAB[GitLab on-prem<br/>gitlab.local]
     end
 
@@ -58,7 +58,7 @@ sequenceDiagram
     participant HS as Harness SaaS
     participant DG as Delegate Pod
     participant CI as CI Build Pod
-    participant OL as Ollama (kepler)
+    participant OL as Ollama (localhost)
     participant K8 as K8s (harness-demo)
 
     Dev->>GH: git push / open PR
@@ -114,16 +114,23 @@ The delegate is the bridge between Harness SaaS and your local infrastructure. K
 - **Authenticated** -- registered to the Harness account with a delegate token
 
 ```bash
-# How the delegate was installed
+# How the delegate was installed (into the rancher-desktop context)
 helm repo add harness-delegate \
   https://app.harness.io/storage/harness-download/delegate-helm-chart/
 helm install demo-delegate harness-delegate/harness-delegate-ng \
   --namespace harness-delegate-ng \
+  --kube-context rancher-desktop \
   --set accountId=<ACCOUNT_ID> \
   --set delegateToken=<TOKEN_FROM_UI> \
   --set delegateName=demo-delegate \
   --set managerEndpoint=https://app.harness.io
 ```
+
+The delegate runs on Rancher Desktop's Kubernetes. If Rancher Desktop isn't running,
+pipelines fail in ~13s at `liteEngineTask` with `Delegate(s) don't have selectors
+[demo-delegate]` -- the stage never gets far enough to clone the repo, so every build
+step reports `Skipped`. Start Rancher Desktop and wait for the pod in
+`harness-delegate-ng` to report ready before re-running.
 
 ## CI Build Pods
 
@@ -145,8 +152,8 @@ graph LR
     subgraph CI Pod
         SCRIPT[ai_review.py]
     end
-    subgraph Kepler Server
-        OLLAMA[Ollama API<br/>:11434]
+    subgraph Windows Host
+        OLLAMA[Ollama API<br/>localhost:11434]
         GEMMA[Gemma 4 26B QAT<br/>15.6GB VRAM]
     end
 
