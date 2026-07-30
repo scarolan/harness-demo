@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "harness": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "harness-mcp-v2"
+      ],
+      "env": {
+        "HARNESS_API_KEY": "pat.EeRjnXTnS4GrLG5VNNJZUw.6a6b31b803914a2303870b1f.McawhXxLlXJdQ4mMCHNh",
+        "HARNESS_BASE_URL": "https://app.harness.io",
+        "HARNESS_ACCOUNT_ID": "EeRjnXTnS4GrLG5VNNJZUw",
+        "HARNESS_ORG_ID": "sandbox",
+        "HARNESS_PROJECT_ID": "harness_demo_seanc"
+      }
+    }
+  }
+}
