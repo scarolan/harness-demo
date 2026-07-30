@@ -74,7 +74,7 @@ harness list execution --limit 1
 
 **Step 5**: Switch to GitHub. Show the PR.
 
-"Back in GitHub — the check failed. And because we have branch protection, the merge button is blocked. This code cannot reach production."
+"Back in GitHub — the `harness/ai-code-review` check failed, and the description carries the actual finding: *BLOCKED — 1 critical: SQL Injection via unvalidated query parameter*. The developer sees why without leaving the PR, and the check links back to the full Harness execution. Because that check is required by branch protection, the merge button is blocked. This code cannot reach production."
 
 **Step 6**: Pause for impact.
 
@@ -118,13 +118,13 @@ git push
 
 **Step 10**: Show the AI Code Review step passing. Click Output tab.
 
-"Verdict: PASSED_WITH_WARNINGS. No more critical findings. The Security Gate passes. Tests run. Image builds. Canary deploy to Kubernetes."
+"Verdict: PASSED_WITH_WARNINGS. No more critical findings. The Security Gate passes. Tests run. The image builds. And notice the Deploy stage is skipped — this is a pull request, so it validates but doesn't deploy. We don't put unmerged code in an environment."
 
 **Step 11**: Switch to GitHub. Show checks passing, merge button enabled.
 
-"GitHub checks are green. The merge button is enabled. This code is safe to ship."
+"GitHub checks are green — `harness/ai-code-review` passed, and it links straight back to the Harness execution. The merge button is enabled. This code is safe to ship."
 
-*Optional*: Click merge to complete the story.
+*Optional*: Click merge to complete the story — that push to `main` is what actually triggers the canary deploy to Kubernetes.
 
 ## Act 3: The Business Value (2 minutes)
 
