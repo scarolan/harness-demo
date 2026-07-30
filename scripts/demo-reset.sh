@@ -4,6 +4,26 @@ set -e
 
 echo "=== Resetting Demo ==="
 
+# Warn before discarding anything on the demo branch that isn't the demo itself.
+# The branch is force-deleted below, so real work committed here would be lost.
+if git rev-parse --verify -q demo/user-search >/dev/null; then
+    EXTRA=$(git log --oneline main..demo/user-search 2>/dev/null \
+        | grep -viE "Add user search endpoint|Fix SQL injection" || true)
+    if [ -n "$EXTRA" ]; then
+        echo ""
+        echo "WARNING: demo/user-search has commits that are not on main and not"
+        echo "         part of the demo. Deleting the branch would discard them:"
+        echo "$EXTRA" | sed 's/^/           /'
+        echo ""
+        printf "Cherry-pick them to main first. Delete anyway? [y/N] "
+        read -r REPLY
+        case "$REPLY" in
+            [yY]) echo "Proceeding — commits above will be unreachable (recover via git reflog)." ;;
+            *) echo "Aborted. Nothing deleted."; exit 1 ;;
+        esac
+    fi
+fi
+
 # Close any open demo PRs
 for pr in $(gh pr list --head demo/user-search --json number -q '.[].number' 2>/dev/null); do
     echo "Closing PR #$pr"
@@ -32,7 +52,15 @@ elif [ "${LIVE##*/}" = "${WANT##*/}" ]; then
 else
     echo "Dev is running ${LIVE##*/}, restoring to $MAIN_SHA"
     kubectl -n harness-demo set image deployment/harness-demo "harness-demo=$WANT"
-    kubectl -n harness-demo rollout status deployment/harness-demo --timeout=90s || true
+    if ! kubectl -n harness-demo rollout status deployment/harness-demo --timeout=90s; then
+        # Usually means no image was ever pushed for this commit (e.g. main was never
+        # built). Roll back so the demo starts on something that actually runs.
+        echo ""
+        echo "WARNING: rollout did not complete — $MAIN_SHA may not exist in the registry."
+        echo "         Rolling back to ${LIVE##*/}."
+        kubectl -n harness-demo rollout undo deployment/harness-demo || true
+        kubectl -n harness-demo rollout status deployment/harness-demo --timeout=90s || true
+    fi
 fi
 
 echo ""
