@@ -1,5 +1,12 @@
+# Secrets -- never commit. .mcp.json carries HARNESS_API_KEY in plaintext.
+.mcp.json
 .env
 *.env
+*.pem
+*.key
+secrets.ps1
+.claude/settings.local.json
+
 __pycache__/
 *.pyc
 *.pyo

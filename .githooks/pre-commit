@@ -1,0 +1,55 @@
+#!/bin/bash
+# Block commits that contain credentials.
+#
+# Enable once per clone:
+#   git config core.hooksPath .githooks
+#
+# Bypass for a known-safe commit with: git commit --no-verify
+
+set -u
+
+fail=0
+
+# 1. Files that should never be tracked, even via `git add -f`.
+BLOCKED_FILES='^(\.mcp\.json|secrets\.ps1|\.env|.*\.pem|.*\.key)$'
+while IFS= read -r f; do
+    [ -z "$f" ] && continue
+    if printf '%s\n' "$f" | grep -qE "$BLOCKED_FILES"; then
+        echo "BLOCKED: $f must never be committed (contains credentials)."
+        fail=1
+    fi
+done < <(git diff --cached --name-only --diff-filter=ACM)
+
+# 2. Credential-shaped strings in staged content. Checks the staged blob, not
+#    the working tree, so it sees exactly what would land in the commit.
+#    REPLACE_ME placeholders are allowed so .example files still pass.
+while IFS= read -r f; do
+    [ -z "$f" ] && continue
+    blob=$(git show ":$f" 2>/dev/null) || continue
+
+    if printf '%s' "$blob" | grep -qE '(pat|sat)\.[A-Za-z0-9]{8,}\.[A-Za-z0-9]{8,}'; then
+        echo "BLOCKED: $f contains what looks like a Harness PAT/SAT."
+        fail=1
+    fi
+    if printf '%s' "$blob" | grep -qE '(AKIA|ASIA)[A-Z0-9]{16}'; then
+        echo "BLOCKED: $f contains what looks like an AWS access key ID."
+        fail=1
+    fi
+    if printf '%s' "$blob" | grep -qE 'gh[pousr]_[A-Za-z0-9]{36}'; then
+        echo "BLOCKED: $f contains what looks like a GitHub token."
+        fail=1
+    fi
+    if printf '%s' "$blob" | grep -qE 'BEGIN [A-Z ]*PRIVATE KEY'; then
+        echo "BLOCKED: $f contains a private key block."
+        fail=1
+    fi
+done < <(git diff --cached --name-only --diff-filter=ACM)
+
+if [ "$fail" -ne 0 ]; then
+    echo
+    echo "Commit aborted. Move the secret to ~/.config/secrets.ps1 and keep the"
+    echo "file untracked, or use a .example file with REPLACE_ME placeholders."
+    exit 1
+fi
+
+exit 0
