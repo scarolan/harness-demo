@@ -71,6 +71,7 @@ Developer pushes code
 - **Canary Deployments**: New versions deploy to a single canary pod first, then roll out to full replicas with automatic rollback on failure.
 - **Pipeline Templates**: The Docker build step is templatized for reuse across teams.
 - **Git Triggers**: Pipeline runs automatically on push to main and on PR open/update.
+- **PR Status Reporting**: The pipeline posts `harness/ai-code-review` back to the commit -- pending on start, then pass/fail carrying the actual finding text and a link to the Harness execution. It reports even when the gate blocks the build.
 - **Branch Protection**: GitHub requires the AI review check to pass before PRs can be merged.
 - **Harness MCP Server**: AI-native platform interaction via Model Context Protocol.
 
@@ -146,28 +147,38 @@ harness-demo/
     test_main.py         # 9 pytest tests
   scripts/
     ai_review.py         # Gemma 4 AI code review (JSON mode)
+    github_status.py     # Posts the AI verdict as a GitHub commit status
     demo-start.sh        # Inject vulnerability for demo
     demo-fix.sh          # Fix vulnerability for demo
-    demo-reset.sh        # Reset demo state
+    demo-reset.sh        # Reset demo state (restores dev to main's image)
+    deploy-local.sh      # Build and deploy straight to local Kubernetes
+    gitlab-demo-*.sh     # Same three-act demo against on-prem GitLab
   k8s/
     deployment.yaml      # K8s deployment with probes
     service.yaml         # NodePort service
     namespace.yaml       # Dedicated namespace
   docs/
     demo-talk-track.md   # 5-10 minute demo script
+    ARCHITECTURE.md      # Diagrams: delegate model, namespaces, deploy strategy
     ai-code-review-experiments.md  # 10 experiment results
+  .harness/
+    pipelines/           # Local copy of the pipeline YAML (live pipeline is INLINE)
   Dockerfile             # Single-stage Python build
   requirements.txt       # Python dependencies
 ```
 
 ## Issues & Findings
 
-During the build, we documented 9 platform issues with root causes and fixes. Highlights:
+During the build, we documented 11 platform issues with root causes and fixes. Highlights:
 
 - Kaniko multi-stage Dockerfile bug (`device or resource busy`)
 - Harness Cloud requires credit card with no self-service upgrade path
 - Output variables lost when step exits non-zero (appended capture lines)
 - UI 404s with `/admin/` vs `/all/` URL routing
+- Harness posts its own commit status only when a stage *fails*, so passing commits
+  looked statusless -- fixed by publishing `harness/ai-code-review` explicitly
+- `localhost` inside a CI pod is the pod, not the host, so the AI review couldn't
+  reach Ollama -- fixed with `host.docker.internal` plus host-gateway fallbacks
 
 ---
 

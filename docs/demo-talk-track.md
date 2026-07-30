@@ -12,7 +12,7 @@
 
 First, **Build and Test** — it runs an AI code review using Gemma 4, a 26-billion parameter model running on-prem via Ollama. Then pytest, then builds and pushes a Docker image to DockerHub. That build step is a **templatized step** — reusable across any team's pipeline.
 
-Second, **Deploy to Dev** — a canary deployment. Harness deploys one pod first, validates it, then rolls out to full replicas. If anything goes wrong, it rolls back automatically.
+Second, **Deploy to Dev** — a canary deployment. Harness deploys one pod first, validates it, then rolls out to full replicas. If anything goes wrong, it rolls back automatically. This stage only runs on `main` — pull requests get the full validation, but nothing unmerged reaches an environment.
 
 The whole thing triggers on a git push — no one has to click 'run.'"
 
@@ -28,8 +28,11 @@ The whole thing triggers on a git push — no one has to click 'run.'"
 
 **Step 1**: Open a terminal. Create a branch and add a SQL injection.
 
+*Shortcut: `./scripts/demo-start.sh` does Steps 1-2 for you. The manual version below
+uses the same branch and commit messages, so `demo-reset.sh` can clean up either way.*
+
 ```bash
-git checkout -b demo/sql-injection
+git checkout -b demo/user-search
 ```
 
 Open `app/main.py` and add after the `/api/info` endpoint:
@@ -51,8 +54,8 @@ def search_users(query: str):
 
 ```bash
 git add app/main.py
-git commit -m "Add user search"
-git push -u origin demo/sql-injection
+git commit -m "Add user search endpoint"
+git push -u origin demo/user-search
 gh pr create --title "Add user search" --body "Search users by name" --base main
 ```
 
@@ -160,15 +163,17 @@ Before the demo:
 - [ ] Have the Harness UI open: pipeline view
 - [ ] Have GitHub open: the repo
 - [ ] Have `docs/ai-code-review-experiments.md` open in a browser tab
+- [ ] Run `./scripts/demo-reset.sh` — closes stale demo PRs, deletes the demo branch, and
+      restores dev to main's image. It stops and asks first if the demo branch has commits
+      that aren't part of the demo, so real work doesn't get force-deleted.
 - [ ] Make sure you're on `main` branch and it's clean (`git status`)
-- [ ] Delete any leftover `demo/*` branches from practice runs
 - [ ] Have Claude Code open with MCP server connected (for Q&A)
 - [ ] *Optional*: `harness auth status` — confirm the CLI is logged in to the sandbox org/project if you plan to use the CLI beat
 
 ## Likely Technical Questions
 
 **"How does the AI review scale to larger codebases?"**
-The current implementation sends all Python files in `app/`. For larger codebases, you'd scope it to changed files only (using `git diff`), or split reviews by module. The Ollama API supports 262K context on Gemma 4.
+It already scopes to changed code — `ai_review.py` sends the `git diff` of `app/` against `origin/main`, not the whole tree, so review time tracks the size of the change rather than the repo. For very large changes you'd split reviews by module. The Ollama API supports 262K context on Gemma 4; we run at 32K.
 
 **"What if the model hallucinates a vulnerability?"**
 That's why we only block on CRITICAL findings, not WARNINGs. And the review is visible in the pipeline logs — a developer can see exactly what the AI flagged and override if needed. It's a gate, not a jail.

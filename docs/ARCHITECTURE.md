@@ -22,7 +22,7 @@ graph TB
                 APP1[harness-demo pods x2<br/>Python FastAPI<br/>NodePort 30080]
             end
         end
-        OLLAMA[Ollama on host<br/>Gemma 4 26B QAT<br/>localhost:11434]
+        OLLAMA[Ollama on host<br/>Gemma 4 26B QAT<br/>host.docker.internal:11434]
         GITLAB[GitLab on-prem<br/>gitlab.local]
     end
 
@@ -58,7 +58,7 @@ sequenceDiagram
     participant HS as Harness SaaS
     participant DG as Delegate Pod
     participant CI as CI Build Pod
-    participant OL as Ollama (localhost)
+    participant OL as Ollama (host)
     participant K8 as K8s (harness-demo)
 
     Dev->>GH: git push / open PR
@@ -73,20 +73,27 @@ sequenceDiagram
     DG->>CI: create build pod in harness-ci namespace
 
     CI->>GH: git clone (via connector)
+    CI->>GH: status check: pending
     CI->>OL: POST /api/generate (code review)
     OL->>CI: JSON findings + verdict
 
     alt CRITICAL findings
-        CI--xHS: step failed (exit 1)
-        HS--xGH: status check: FAILED
+        CI--xHS: Security Gate failed (exit 1)
+        CI->>GH: status check: FAILED + finding text
+        Note over CI,GH: Report step runs on stage failure too,<br/>so a blocked PR still gets its status
     else Clean review
         CI->>CI: run pytest
         CI->>CI: kaniko build
         CI->>CI: push to DockerHub
+        CI->>GH: status check: SUCCESS
         CI->>HS: build stage complete
-        DG->>K8: canary deploy (1 pod)
-        DG->>K8: rolling deploy (all pods)
-        HS->>GH: status check: PASSED
+
+        alt Push to main
+            DG->>K8: canary deploy (1 pod)
+            DG->>K8: rolling deploy (all pods)
+        else Pull request
+            Note over HS,K8: Deploy stage skipped --<br/>PRs validate, they don't deploy
+        end
     end
 
     rect rgb(232, 245, 233)
@@ -101,7 +108,7 @@ sequenceDiagram
 | `harness-delegate-ng` | Delegate runtime | `demo-delegate` pod + auto-upgrader jobs |
 | `harness-ci` | CI build infrastructure | Ephemeral pods per pipeline run (empty between runs) |
 | `harness-demo` | Python app deployment | 2 replicas, NodePort 30080 |
-| `harness-petclinic` | Java app deployment | 2 replicas, NodePort 30081 |
+| `harness-petclinic` | Java app deployment | 2 replicas, NodePort 30081 (not currently deployed) |
 
 ## The Delegate
 
@@ -138,10 +145,12 @@ Each pipeline run creates ephemeral containers in the `harness-ci` namespace:
 
 | Step | Container Image | What It Does |
 |------|----------------|--------------|
+| GitHub Status Pending | `python:3.12-slim` | Posts a `pending` commit status to the PR |
 | AI Code Review | `python:3.12-slim` | Sends code to Ollama, parses JSON verdict |
 | Security Gate | `alpine` | Reads verdict, blocks on CRITICAL |
 | Run Tests | `python:3.12-slim` | `pytest` (Python) or `mvnw test` (Java) |
 | Build & Push | Kaniko | Builds Docker image, pushes to DockerHub |
+| GitHub Status Report | `python:3.12-slim` | Posts the final verdict; runs even if the gate failed |
 
 These pods are created at pipeline start and destroyed when it finishes. The `harness-ci` namespace is empty between runs.
 
@@ -153,7 +162,7 @@ graph LR
         SCRIPT[ai_review.py]
     end
     subgraph Windows Host
-        OLLAMA[Ollama API<br/>localhost:11434]
+        OLLAMA[Ollama API<br/>host.docker.internal:11434]
         GEMMA[Gemma 4 26B QAT<br/>15.6GB VRAM]
     end
 
@@ -166,10 +175,13 @@ graph LR
 ```
 
 - Model runs on local host via WSL2/Windows with keep-alive
-- Context window: 16,384 tokens (set via `num_ctx`)
+- Context window: 32,768 tokens (set via `num_ctx`)
 - Structured JSON output via Ollama schema enforcement
-- Review time: ~15-25 seconds per run
-- Retry logic: up to 3 attempts on JSON parse failure
+- Review time: ~10-25 seconds per run
+- Retry logic: up to 3 attempts, on both connection failure and JSON parse failure
+- Addressed as `host.docker.internal` -- inside a CI pod `localhost` is the pod itself,
+  not the host. `ai_review.py` falls back to the host gateway names if `OLLAMA_URL`
+  is unreachable, and logs which candidate it reached.
 - No code leaves the network
 
 ## Deployment Strategy
