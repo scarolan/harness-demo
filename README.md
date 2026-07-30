@@ -28,6 +28,8 @@ Developer pushes code
   --> GitHub webhook
   --> Harness CI/CD Pipeline
         |
+        +--> GitHub Status: pending
+        |
         +--> AI Code Review (Gemma 4 26B via Ollama - on-prem)
         |      Returns structured JSON: findings, severity, verdict
         |      CRITICAL security issues --> pipeline BLOCKED
@@ -39,9 +41,14 @@ Developer pushes code
         |
         +--> Build & Push Docker Image (templatized step)
         |
-        +--> Canary Deploy (1 pod)
-        +--> Canary Delete
-        +--> Rolling Deploy (full rollout)
+        +--> GitHub Status: success / failure (always runs)
+        |      Reports the AI verdict back to the PR
+        |
+        +--> Deploy stage (main branch only -- PRs validate, they don't deploy)
+               |
+               +--> Canary Deploy (1 pod)
+               +--> Canary Delete
+               +--> Rolling Deploy (full rollout)
   --> App live on Kubernetes
 ```
 

@@ -29,6 +29,36 @@ pipeline:
             steps:
               - step:
                   type: Run
+                  name: GitHub Status Pending
+                  identifier: GitHub_Status_Pending
+                  spec:
+                    connectorRef: dockerhub
+                    image: python:3.12-slim
+                    shell: Sh
+                    command: |-
+                      python3 scripts/github_status.py
+                    envVariables:
+                      GITHUB_TOKEN: <+secrets.getValue("github_pat")>
+                      GITHUB_REPO: scarolan/harness-demo
+                      STATUS_STATE: pending
+                      STATUS_CONTEXT: harness/ai-code-review
+                      STATUS_DESC: AI security review in progress...
+                      TARGET_URL: <+pipeline.execution.url>
+                      PR_NUMBER: <+codebase.prNumber>
+                      COMMIT_SHA: <+codebase.commitSha>
+                    resources:
+                      limits:
+                        memory: 256Mi
+                        cpu: 200m
+                  timeout: 2m
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: Ignore
+              - step:
+                  type: Run
                   name: AI Code Review
                   identifier: AI_Code_Review
                   spec:
@@ -183,6 +213,58 @@ pipeline:
                           - <+codebase.shortCommitSha>
                         dockerfile: Dockerfile
                         context: .
+              - step:
+                  type: Run
+                  name: GitHub Status Report
+                  identifier: GitHub_Status_Report
+                  spec:
+                    connectorRef: dockerhub
+                    image: python:3.12-slim
+                    shell: Sh
+                    command: |-
+                      # AI_Code_Review succeeds even when it blocks, so its verdict is
+                      # always readable here — unlike the gate, which exits non-zero.
+                      VERDICT="<+execution.steps.AI_Code_Review.output.outputVariables.REVIEW_VERDICT>"
+                      CRITICAL="<+execution.steps.AI_Code_Review.output.outputVariables.CRITICAL_COUNT>"
+                      FINDINGS="<+execution.steps.AI_Code_Review.output.outputVariables.CRITICAL_FINDINGS>"
+
+                      case "$VERDICT" in
+                        BLOCKED)
+                          export STATUS_STATE=failure
+                          export STATUS_DESC="BLOCKED — $CRITICAL critical: $FINDINGS"
+                          ;;
+                        APPROVED|PASSED_WITH_WARNINGS)
+                          export STATUS_STATE=success
+                          export STATUS_DESC="$VERDICT — no critical findings"
+                          ;;
+                        *)
+                          # Unresolved expression or an early failure before the review ran.
+                          export STATUS_STATE=error
+                          export STATUS_DESC="AI review did not complete"
+                          ;;
+                      esac
+
+                      python3 scripts/github_status.py
+                    envVariables:
+                      GITHUB_TOKEN: <+secrets.getValue("github_pat")>
+                      GITHUB_REPO: scarolan/harness-demo
+                      STATUS_CONTEXT: harness/ai-code-review
+                      TARGET_URL: <+pipeline.execution.url>
+                      PR_NUMBER: <+codebase.prNumber>
+                      COMMIT_SHA: <+codebase.commitSha>
+                    resources:
+                      limits:
+                        memory: 256Mi
+                        cpu: 200m
+                  timeout: 2m
+                  when:
+                    stageStatus: All
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: Ignore
     - stage:
         name: Deploy to Dev
         identifier: Deploy_to_Dev
@@ -248,6 +330,11 @@ pipeline:
                   timeout: 10m
                   spec: {}
         tags: {}
+        when:
+          pipelineStatus: Success
+          # PR builds validate only — deploying an unmerged branch would leave dev
+          # running code from a PR that may never merge.
+          condition: <+codebase.build.type> == "branch" && <+codebase.branch> == "main"
         failureStrategies:
           - onFailure:
               errors:
