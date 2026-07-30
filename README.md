@@ -153,6 +153,7 @@ harness-demo/
     demo-reset.sh        # Reset demo state (restores dev to main's image)
     deploy-local.sh      # Build and deploy straight to local Kubernetes
     gitlab-demo-*.sh     # Same three-act demo against on-prem GitLab
+    check-pipeline-drift.sh  # Diffs .harness/ copies against the live Harness entities
   k8s/
     deployment.yaml      # K8s deployment with probes
     service.yaml         # NodePort service
@@ -162,10 +163,31 @@ harness-demo/
     ARCHITECTURE.md      # Diagrams: delegate model, namespaces, deploy strategy
     ai-code-review-experiments.md  # 10 experiment results
   .harness/
-    pipelines/           # Local copy of the pipeline YAML (live pipeline is INLINE)
+    pipelines/           # Local copies -- the live entities are INLINE (see note below)
+    templates/           # Templatized Docker build & push step
+    triggers/            # Push-to-main and pull-request webhook triggers
+    manifests/           # K8s manifests + values.yaml the Deploy stage renders
   Dockerfile             # Single-stage Python build
   requirements.txt       # Python dependencies
 ```
+
+## A Note on `.harness/`
+
+The pipeline, template, and triggers are all `storeType: INLINE` -- Harness holds the
+authoritative YAML in its own database, and the files under `.harness/` are
+hand-maintained copies. **Committing a change to those files does not change what runs.**
+Apply the change in the Harness UI or via the API; the file is documentation.
+
+Drift is silent in both directions, so there's a check for it:
+
+```bash
+./scripts/check-pipeline-drift.sh          # exits 1 and shows a diff if anything drifted
+./scripts/check-pipeline-drift.sh --pull   # overwrite local copies from live, then commit
+```
+
+Converting these to Remote (git-synced) would make the repo authoritative and remove the
+duplication. That's a deliberate change -- it also means a PR could modify the pipeline
+that gates it -- so it hasn't been done.
 
 ## Issues & Findings
 

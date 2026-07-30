@@ -163,6 +163,9 @@ Before the demo:
 - [ ] Have the Harness UI open: pipeline view
 - [ ] Have GitHub open: the repo
 - [ ] Have `docs/ai-code-review-experiments.md` open in a browser tab
+- [ ] `./scripts/check-pipeline-drift.sh` — confirms the YAML in `.harness/` still matches
+      the live Harness entities. Needs `HARNESS_PAT`. Catches the case where someone edited
+      the pipeline in the UI and the repo copy went stale (or vice versa).
 - [ ] Run `./scripts/demo-reset.sh` — closes stale demo PRs, deletes the demo branch, and
       restores dev to main's image. It stops and asks first if the demo branch has commits
       that aren't part of the demo, so real work doesn't get force-deleted.
