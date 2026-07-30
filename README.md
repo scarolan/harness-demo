@@ -100,7 +100,8 @@ Full analysis with model comparisons (26B QAT vs 31B) and prompt engineering res
 ### Prerequisites
 
 - Rancher Desktop with Kubernetes enabled
-- Ollama running on `localhost:11434` with the `gemma4:26b` model
+- Ollama running on `localhost:11434` with the `gemma4:26b` model (the pipeline reaches it
+  at `host.docker.internal:11434`, since `localhost` inside a CI pod is the pod itself)
 - Harness account with delegate installed
 - GitHub and DockerHub accounts
 

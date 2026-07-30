@@ -6,7 +6,13 @@ import sys
 import requests
 
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434").rstrip("/")
-OLLAMA_URLS = [f"{OLLAMA_URL}/api/generate"]
+
+# Ollama runs on the host, not in the cluster. From a CI pod "localhost" is the pod
+# itself, so fall back to the host gateway names Rancher Desktop/k3s expose. Set
+# OLLAMA_URL to pin a specific address and the fallbacks are still tried after it.
+_FALLBACK_HOSTS = ["http://host.docker.internal:11434", "http://host.k3d.internal:11434"]
+_CANDIDATES = [OLLAMA_URL] + [h for h in _FALLBACK_HOSTS if h != OLLAMA_URL]
+OLLAMA_URLS = [f"{base}/api/generate" for base in _CANDIDATES]
 MODEL = os.environ.get("OLLAMA_MODEL", "gemma4:26b")
 
 SECURITY_KEYWORDS = [
@@ -135,13 +141,17 @@ for attempt in range(1, MAX_RETRIES + 1):
                 },
                 timeout=120,
             )
+            print(f"Reached Ollama at {url}")
             break # Success, stop trying URLs
         except Exception as e:
+            print(f"  {url} unreachable: {type(e).__name__}")
             last_error = e
             continue
 
     if not resp:
-        print(f"WARNING: Attempt {attempt} — could not reach Ollama at {OLLAMA_URL}: {last_error}")
+        tried = ", ".join(OLLAMA_URLS)
+        print(f"WARNING: Attempt {attempt} — could not reach Ollama. Tried: {tried}")
+        print(f"         Last error: {last_error}")
         if attempt == MAX_RETRIES:
             print("AI review is required — cannot proceed without it.")
             sys.exit(1)

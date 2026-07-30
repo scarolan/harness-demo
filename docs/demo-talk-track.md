@@ -155,6 +155,8 @@ Before the demo:
 - [ ] `kubectl port-forward -n harness-demo svc/harness-demo 8080:80` (keep the app accessible)
 - [ ] Make sure Rancher Desktop K8s is running (`kubectl config current-context` should be `rancher-desktop`, then `kubectl get nodes`)
 - [ ] Make sure Ollama is running on localhost (`curl http://localhost:11434/api/tags`)
+- [ ] Confirm a CI pod can reach it — `localhost` won't work from inside the cluster, the pipeline uses `host.docker.internal`:
+      `kubectl -n harness-ci run probe --rm -i --restart=Never --image=curlimages/curl -- -s -o /dev/null -w '%{http_code}\n' http://host.docker.internal:11434/api/tags`
 - [ ] Have the Harness UI open: pipeline view
 - [ ] Have GitHub open: the repo
 - [ ] Have `docs/ai-code-review-experiments.md` open in a browser tab
