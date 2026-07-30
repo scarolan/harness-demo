@@ -82,7 +82,8 @@ pipeline:
                         echo "$name=$(cat "$f")"
                       done
                     envVariables:
-                      OLLAMA_URL: http://localhost:11434
+                      # In a CI pod "localhost" is the pod, not the host where Ollama runs.
+                      OLLAMA_URL: http://host.docker.internal:11434
                       OLLAMA_MODEL: gemma4:26b
                     outputVariables:
                       - name: REVIEW_VERDICT
