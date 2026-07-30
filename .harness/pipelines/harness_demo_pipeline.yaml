@@ -232,11 +232,11 @@ pipeline:
                       case "$VERDICT" in
                         BLOCKED)
                           export STATUS_STATE=failure
-                          export STATUS_DESC="BLOCKED — $CRITICAL critical: $FINDINGS"
+                          export STATUS_DESC="BLOCKED - $CRITICAL critical: $FINDINGS"
                           ;;
                         APPROVED|PASSED_WITH_WARNINGS)
                           export STATUS_STATE=success
-                          export STATUS_DESC="$VERDICT — no critical findings"
+                          export STATUS_DESC="$VERDICT - no critical findings"
                           ;;
                         *)
                           # Unresolved expression or an early failure before the review ran.
