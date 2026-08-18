@@ -1,6 +1,6 @@
 pipeline:
-  name: harness-demo
-  identifier: harness_demo
+  name: Ollama Demo
+  identifier: ollama_demo
   projectIdentifier: harness_demo_seanc
   orgIdentifier: sandbox
   tags: {}

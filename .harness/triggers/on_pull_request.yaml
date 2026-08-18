@@ -6,7 +6,7 @@ trigger:
   tags: {}
   orgIdentifier: sandbox
   projectIdentifier: harness_demo_seanc
-  pipelineIdentifier: harness_demo
+  pipelineIdentifier: ollama_demo
   source:
     type: Webhook
     spec:
@@ -28,7 +28,7 @@ trigger:
             - Synchronize
   inputYaml: |
     pipeline:
-      identifier: harness_demo
+      identifier: ollama_demo
       properties:
         ci:
           codebase:

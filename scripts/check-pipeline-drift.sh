@@ -22,7 +22,7 @@ set -uo pipefail
 ACCOUNT="${HARNESS_ACCOUNT_ID:-EeRjnXTnS4GrLG5VNNJZUw}"
 ORG="${HARNESS_ORG:-sandbox}"
 PROJECT="${HARNESS_PROJECT:-harness_demo_seanc}"
-PIPELINE="${HARNESS_PIPELINE:-harness_demo}"
+PIPELINE="${HARNESS_PIPELINE:-ollama_demo}"
 BASE="https://app.harness.io"
 
 PULL=0
@@ -104,7 +104,7 @@ echo ""
 fetch "$BASE/pipeline/api/pipelines/$PIPELINE?$SCOPE" \
       "data.yamlPipeline" "$TMP/pipeline.yaml"
 compare "pipeline/$PIPELINE" \
-        ".harness/pipelines/harness_demo_pipeline.yaml" "$TMP/pipeline.yaml"
+        ".harness/pipelines/ollama_demo_pipeline.yaml" "$TMP/pipeline.yaml"
 
 # --- template ---
 fetch "$BASE/template/api/templates/docker_build_push?$SCOPE&versionLabel=v1" \
