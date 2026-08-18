@@ -273,7 +273,7 @@ pipeline:
         spec:
           deploymentType: Kubernetes
           service:
-            serviceRef: harness_demo
+            serviceRef: ollama_demo
             serviceInputs:
               serviceDefinition:
                 type: Kubernetes
