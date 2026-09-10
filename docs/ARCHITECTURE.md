@@ -18,8 +18,8 @@ graph TB
             subgraph harness-ci
                 BUILD[Ephemeral Build Pods<br/>AI Review / Tests / Kaniko<br/>Created per pipeline run]
             end
-            subgraph harness-demo
-                APP1[harness-demo pods x2<br/>Python FastAPI<br/>NodePort 30080]
+            subgraph ollama-demo
+                APP1[ollama-demo pods x2<br/>Python FastAPI<br/>NodePort 30080]
             end
         end
         OLLAMA[Ollama on host<br/>Gemma 4 26B QAT<br/>host.docker.internal:11434]
@@ -59,7 +59,7 @@ sequenceDiagram
     participant DG as Delegate Pod
     participant CI as CI Build Pod
     participant OL as Ollama (host)
-    participant K8 as K8s (harness-demo)
+    participant K8 as K8s (ollama-demo)
 
     Dev->>GH: git push / open PR
     GH->>HS: webhook (push/PR event)
@@ -107,7 +107,7 @@ sequenceDiagram
 |-----------|---------|----------|
 | `harness-delegate-ng` | Delegate runtime | `demo-delegate` pod + auto-upgrader jobs |
 | `harness-ci` | CI build infrastructure | Ephemeral pods per pipeline run (empty between runs) |
-| `harness-demo` | Python app deployment | 2 replicas, NodePort 30080 |
+| `ollama-demo` | Python app deployment | 2 replicas, NodePort 30080 |
 | `harness-petclinic` | Java app deployment | 2 replicas, NodePort 30081 (not currently deployed) |
 
 ## The Delegate

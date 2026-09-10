@@ -137,7 +137,7 @@ pytest -v tests/
 ## Project Structure
 
 ```
-harness-demo/
+ollama-demo/
   app/
     main.py              # FastAPI application
     config.py            # Environment-based configuration

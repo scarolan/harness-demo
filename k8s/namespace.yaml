@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: harness-demo
+  name: ollama-demo
   labels:
-    app: harness-demo
+    app: ollama-demo
     managed-by: harness

@@ -1,4 +1,4 @@
-namespace: harness-demo
+namespace: ollama-demo
 replicas: 2
 image: <+artifact.image>
 appEnvironment: production

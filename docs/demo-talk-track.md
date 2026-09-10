@@ -155,7 +155,7 @@ git push
 
 Before the demo:
 
-- [ ] `kubectl port-forward -n harness-demo svc/harness-demo 8080:80` (keep the app accessible)
+- [ ] `kubectl port-forward -n ollama-demo svc/ollama-demo 8080:80` (keep the app accessible)
 - [ ] Make sure Rancher Desktop K8s is running (`kubectl config current-context` should be `rancher-desktop`, then `kubectl get nodes`)
 - [ ] Make sure Ollama is running on localhost (`curl http://localhost:11434/api/tags`)
 - [ ] Confirm a CI pod can reach it — `localhost` won't work from inside the cluster, the pipeline uses `host.docker.internal`:
