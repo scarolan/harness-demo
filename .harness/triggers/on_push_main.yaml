@@ -14,7 +14,7 @@ trigger:
       spec:
         type: Push
         spec:
-          connectorRef: github
+          connectorRef: org.github
           autoAbortPreviousExecutions: false
           payloadConditions:
             - key: targetBranch

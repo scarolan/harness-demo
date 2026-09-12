@@ -7,7 +7,7 @@ pipeline:
   properties:
     ci:
       codebase:
-        connectorRef: github
+        connectorRef: org.github
         repoName: harness-demo
         build: <+input>
   stages:
@@ -20,7 +20,7 @@ pipeline:
           infrastructure:
             type: KubernetesDirect
             spec:
-              connectorRef: k8s_local
+              connectorRef: org.k8s_local
               namespace: harness-ci
               automountServiceAccountToken: true
               nodeSelector: {}
@@ -32,7 +32,7 @@ pipeline:
                   name: GitHub Status Pending
                   identifier: GitHub_Status_Pending
                   spec:
-                    connectorRef: dockerhub
+                    connectorRef: org.dockerhub
                     image: python:3.12-slim
                     shell: Sh
                     command: |-
@@ -62,7 +62,7 @@ pipeline:
                   name: AI Code Review
                   identifier: AI_Code_Review
                   spec:
-                    connectorRef: dockerhub
+                    connectorRef: org.dockerhub
                     image: python:3.12-slim
                     shell: Sh
                     command: |-
@@ -124,7 +124,7 @@ pipeline:
                   name: Security Gate
                   identifier: Security_Gate
                   spec:
-                    connectorRef: dockerhub
+                    connectorRef: org.dockerhub
                     image: alpine:3.20
                     shell: Sh
                     command: |-
@@ -187,7 +187,7 @@ pipeline:
                   name: Run Tests
                   identifier: Run_Tests
                   spec:
-                    connectorRef: dockerhub
+                    connectorRef: org.dockerhub
                     image: python:3.12-slim
                     shell: Sh
                     command: |-
@@ -204,7 +204,7 @@ pipeline:
                   identifier: Build_and_Push_Image
                   timeout: 20m
                   spec:
-                    connectorRef: dockerhub
+                    connectorRef: org.dockerhub
                     repo: carolanio/harness-demo
                     tags:
                       - <+codebase.shortCommitSha>
@@ -218,7 +218,7 @@ pipeline:
                   name: GitHub Status Report
                   identifier: GitHub_Status_Report
                   spec:
-                    connectorRef: dockerhub
+                    connectorRef: org.dockerhub
                     image: python:3.12-slim
                     shell: Sh
                     command: |-

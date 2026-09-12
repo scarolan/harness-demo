@@ -14,7 +14,7 @@ trigger:
       spec:
         type: PullRequest
         spec:
-          connectorRef: github
+          connectorRef: org.github
           autoAbortPreviousExecutions: true
           payloadConditions:
             - key: targetBranch
