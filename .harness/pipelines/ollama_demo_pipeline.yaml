@@ -288,7 +288,7 @@ pipeline:
             environmentRef: dev
             deployToAll: false
             infrastructureDefinitions:
-              - identifier: rancher_desktop
+              - identifier: ollama_dev_infra
           execution:
             steps:
               - step:
