@@ -3,8 +3,8 @@ template:
   identifier: docker_build_push
   versionLabel: v1
   type: Step
-  projectIdentifier: platform_services
-  orgIdentifier: acme_corp
+  projectIdentifier: harness_demo_seanc
+  orgIdentifier: sandbox
   tags: {}
   spec:
     type: BuildAndPushDockerRegistry

@@ -1,9 +1,0 @@
-environment:
-  name: dev
-  identifier: dev
-  orgIdentifier: acme_corp
-  projectIdentifier: platform_services
-  description: "Development Environment"
-  tags: {}
-  type: PreProduction
-  environmentType: PreProduction

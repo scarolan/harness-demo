@@ -1,8 +1,8 @@
 pipeline:
   name: Ollama Demo
   identifier: ollama_demo
-  projectIdentifier: platform_services
-  orgIdentifier: acme_corp
+  projectIdentifier: harness_demo_seanc
+  orgIdentifier: sandbox
   tags: {}
   properties:
     ci:
