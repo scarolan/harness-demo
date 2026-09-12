@@ -38,7 +38,7 @@ pipeline:
                     command: |-
                       python3 scripts/github_status.py
                     envVariables:
-                      GITHUB_TOKEN: <+secrets.getValue("github_pat")>
+                      GITHUB_TOKEN: <+secrets.getValue("org.github_pat")>
                       GITHUB_REPO: scarolan/harness-demo
                       STATUS_STATE: pending
                       STATUS_CONTEXT: harness/ai-code-review
@@ -246,7 +246,7 @@ pipeline:
 
                       python3 scripts/github_status.py
                     envVariables:
-                      GITHUB_TOKEN: <+secrets.getValue("github_pat")>
+                      GITHUB_TOKEN: <+secrets.getValue("org.github_pat")>
                       GITHUB_REPO: scarolan/harness-demo
                       STATUS_CONTEXT: harness/ai-code-review
                       TARGET_URL: <+pipeline.execution.url>
