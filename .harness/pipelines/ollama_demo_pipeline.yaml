@@ -280,7 +280,6 @@ pipeline:
                 spec:
                   artifacts:
                     primary:
-                      primaryArtifactRef: dockerhub
                       sources:
                         - identifier: dockerhub
                           type: DockerRegistry
