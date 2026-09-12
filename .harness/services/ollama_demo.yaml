@@ -1,0 +1,24 @@
+service:
+  name: Ollama Demo
+  identifier: ollama_demo
+  orgIdentifier: acme_corp
+  projectIdentifier: platform_services
+  description: "Ollama Demo Service"
+  tags: {}
+  serviceDefinition:
+    type: Kubernetes
+    spec:
+      manifests:
+        - manifest:
+            identifier: k8s
+            type: K8sManifest
+            spec:
+              store:
+                type: Local
+                spec:
+                  paths:
+                    - k8s
+      artifacts:
+        primary:
+          primaryArtifactRef: <+input>
+          sources: <+input>

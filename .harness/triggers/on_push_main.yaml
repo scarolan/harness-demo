@@ -4,8 +4,8 @@ trigger:
   enabled: true
   description: Run on push to main branch
   tags: {}
-  orgIdentifier: sandbox
-  projectIdentifier: harness_demo_seanc
+  orgIdentifier: acme_corp
+  projectIdentifier: platform_services
   pipelineIdentifier: ollama_demo
   source:
     type: Webhook
