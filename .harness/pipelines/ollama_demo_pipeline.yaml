@@ -199,21 +199,20 @@ pipeline:
                         cpu: 500m
                   timeout: 5m
               - step:
-                  type: Template
+                  type: BuildAndPushDockerRegistry
                   name: Build and Push Image
                   identifier: Build_and_Push_Image
-                  template:
-                    templateRef: docker_build_push
-                    versionLabel: v1
-                    templateInputs:
-                      type: BuildAndPushDockerRegistry
-                      spec:
-                        connectorRef: dockerhub
-                        repo: carolanio/harness-demo
-                        tags:
-                          - <+codebase.shortCommitSha>
-                        dockerfile: Dockerfile
-                        context: .
+                  timeout: 20m
+                  spec:
+                    connectorRef: dockerhub
+                    repo: carolanio/harness-demo
+                    tags:
+                      - <+codebase.shortCommitSha>
+                    dockerfile: Dockerfile
+                    context: .
+                    buildArgs:
+                      COMMIT_SHA: <+codebase.commitSha>
+                      BUILD_TIME: <+pipeline.startTs>
               - step:
                   type: Run
                   name: GitHub Status Report
