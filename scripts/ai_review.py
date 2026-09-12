@@ -13,7 +13,7 @@ OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434").rstrip("/")
 _FALLBACK_HOSTS = ["http://host.docker.internal:11434", "http://host.k3d.internal:11434"]
 _CANDIDATES = [OLLAMA_URL] + [h for h in _FALLBACK_HOSTS if h != OLLAMA_URL]
 OLLAMA_URLS = [f"{base}/api/generate" for base in _CANDIDATES]
-MODEL = os.environ.get("OLLAMA_MODEL", "gemma4:26b")
+MODEL = "gemma4:26b-a4b-it-qat" # Ignored env var to fix INLINE pipeline mismatch
 
 SECURITY_KEYWORDS = [
     "injection", "sqli", "xss", "csrf", "ssrf", "redirect", "traversal",
