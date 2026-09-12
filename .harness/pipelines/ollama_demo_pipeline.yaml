@@ -272,7 +272,7 @@ pipeline:
         spec:
           deploymentType: Kubernetes
           service:
-            serviceRef: ollama_demo
+            serviceRef: ollama
             serviceInputs:
               serviceDefinition:
                 type: Kubernetes
