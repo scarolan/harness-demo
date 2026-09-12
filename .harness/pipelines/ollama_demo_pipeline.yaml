@@ -8,7 +8,7 @@ pipeline:
     ci:
       codebase:
         connectorRef: org.github
-        repoName: harness-demo
+        repoName: scarolan/harness-demo
         build: <+input>
   stages:
     - stage:
