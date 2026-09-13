@@ -3,22 +3,30 @@ service:
   identifier: ollama_demo
   orgIdentifier: acme_corp
   projectIdentifier: platform_services
-  description: "Ollama Demo Service"
-  tags: {}
   serviceDefinition:
     type: Kubernetes
     spec:
       manifests:
         - manifest:
-            identifier: k8s
+            identifier: k8s_manifests
             type: K8sManifest
             spec:
               store:
-                type: Local
+                type: HarnessCode
                 spec:
+                  repoName: ollama_demo
+                  gitFetchType: Branch
                   paths:
                     - k8s
+                  branch: main
+              skipResourceVersioning: false
       artifacts:
         primary:
-          primaryArtifactRef: <+input>
-          sources: <+input>
+          primaryArtifactRef: dockerhub
+          sources:
+            - identifier: dockerhub
+              spec:
+                connectorRef: org.dockerhub
+                imagePath: carolanio/harness-demo
+                tag: <+input>
+              type: DockerRegistry
